@@ -1,0 +1,123 @@
+# depslib dependency file v1.0
+1525013623 source:c:\users\tonyk\desktop\rtree\rtree\rtree.c
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<float.h>
+	<math.h>
+	"rtree.h"
+
+1525011896 c:\users\tonyk\desktop\rtree\rtree\rtree.h
+
+1525012507 source:c:\users\tonyk\desktop\rtree\rtree\test.c
+	<stdio.h>
+	"rtree.h"
+
+1525056045 source:c:\users\tonyk\desktop\rtree0429\rtree0429\rtree\rtree.c
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<float.h>
+	<math.h>
+	"rtree.h"
+
+1525056356 c:\users\tonyk\desktop\rtree0429\rtree0429\rtree\rtree.h
+
+1525056083 source:c:\users\tonyk\desktop\rtree0429\rtree0429\rtree\test.c
+	<stdio.h>
+	"rtree.h"
+
+1525056045 source:c:\users\tonyk\desktop\rtree0430\rtree0429\rtree\rtree.c
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<float.h>
+	<math.h>
+	"rtree.h"
+
+1525056356 c:\users\tonyk\desktop\rtree0430\rtree0429\rtree\rtree.h
+
+1525057059 source:c:\users\tonyk\desktop\rtree0430\rtree0429\rtree\test.c
+	<stdio.h>
+	"rtree.h"
+
+1525261846 source:c:\users\tonyk\desktop\rtree0430-1\rtree0430-1\rtree\rtree.c
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<float.h>
+	<math.h>
+	<string.h>
+	"rtree.h"
+
+1525231683 c:\users\tonyk\desktop\rtree0430-1\rtree0430-1\rtree\rtree.h
+
+1525266741 source:c:\users\tonyk\desktop\rtree0430-1\rtree0430-1\rtree\test.c
+	<stdio.h>
+	"rtree.h"
+
+1525836587 source:c:\users\tonyk\desktop\rtree0502\rtree0430-1\rtree0430-1\rtree\rtree.c
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<float.h>
+	<math.h>
+	<string.h>
+	"rtree.h"
+
+1525836587 c:\users\tonyk\desktop\rtree0502\rtree0430-1\rtree0430-1\rtree\rtree.h
+
+1525836733 source:c:\users\tonyk\desktop\rtree0502\rtree0430-1\rtree0430-1\rtree\test.c
+	<stdio.h>
+	"rtree.h"
+
+1525836587 source:c:\users\tonyk\desktop\rtree 0509\rtree\rtree.c
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<float.h>
+	<math.h>
+	<string.h>
+	"rtree.h"
+
+1525836587 c:\users\tonyk\desktop\rtree 0509\rtree\rtree.h
+
+1525962080 source:c:\users\tonyk\desktop\rtree 0509\rtree\test.c
+	<stdio.h>
+	"rtree.h"
+	<math.h>
+
+1525964288 source:c:\users\tonyk\desktop\rtree 0510\rtree\rtree.c
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<float.h>
+	<math.h>
+	<string.h>
+	"rtree.h"
+
+1525964297 c:\users\tonyk\desktop\rtree 0510\rtree\rtree.h
+
+1526098828 source:c:\users\tonyk\desktop\rtree 0510\rtree\test.c
+	<stdio.h>
+	"rtree.h"
+	<math.h>
+	<stdlib.h>
+
+1525964288 source:c:\users\tonyk\desktop\rtree 0512-1\rtree\rtree.c
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<float.h>
+	<math.h>
+	<string.h>
+	"rtree.h"
+
+1525964297 c:\users\tonyk\desktop\rtree 0512-1\rtree\rtree.h
+
+1526103766 source:c:\users\tonyk\desktop\rtree 0512-1\rtree\test.c
+	<stdio.h>
+	"rtree.h"
+	<math.h>
+	<stdlib.h>
+
