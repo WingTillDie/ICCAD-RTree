@@ -37,7 +37,7 @@ void read(){
     FILE *fp;
     char buffer[256];
     char *delim = " ";
-    fp = fopen("circuit5.cut","r");     /* open file pointer */
+    fp = fopen("circuit2.cut","r");     /* open file pointer */
     if(fp){// if file exist...
         fgets(buffer, 256, fp);
         chip_boundary.bound[0] = atof(strtok(buffer, delim));
@@ -78,6 +78,7 @@ int main()
 
     read();
     net *point = front;
+
     printf("finished reading\n");
     while(point!=NULL){
         RTREEMBR test_rects[]={point->xmin, point->ymin, point->xmax, point->ymax};
@@ -87,14 +88,16 @@ int main()
     }
     printf("finished building rtree\n");
 
-    for(int i=0; i<layer; i++)
+    for(int i=0; i<layer; i++){
         layer_dummy_insert(root[i]);
+        printf("Layer %d completed\n", i);;
+    }
 
     printf("completed\n");
     //PrintAllTheLeaves(root);
     //RTreePrintNode( root, 0);
     for(int i=0; i<layer; i++)
-        RTreeDestroy (root);
+        RTreeDestroy (root[i]);
     return 0;
 }
 
@@ -105,13 +108,14 @@ void layer_dummy_insert(RTREENODE *root){
             //printf("Window rect : %f %f %f %f\n", window_rect);
             //printf("Initial window rect density : %f\n", RTreeSearchDensity(root, &window_rect));
             double  fill_width = max_fill_width;
-            while(RTreeSearchDensity(root, &window_rect) <= min_density /*&& fill_width >= min_width*/){
+            while(RTreeSearchDensity(root, &window_rect) <= min_density && fill_width >= min_width){
                 //printf("Dummy metal fill width : %f\n", fill_width);
                 dummymetalinsert(&root, &window_rect, fill_width, min_space);
                 fill_width = ceil(fill_width * alpha);
             }
-            //printf("Inserted window density : %f\n", RTreeSearchDensity(root, &window_rect));
-            printf("Dummy metal fill width : %.0f Inserted window density : %.3f Window : %.0f %.0f %.0f %.0f\n", fill_width, RTreeSearchDensity(root, &window_rect), window_rect);
+            if(fill_width < min_width && RTreeSearchDensity(root, &window_rect) <= min_density)
+                printf("%f %f %f %f density insufficient", window_rect);
+            //printf("Dummy metal fill width : %.0f Inserted window density : %.3f Window : %.0f %.0f %.0f %.0f\n", fill_width, RTreeSearchDensity(root, &window_rect), window_rect);
             window_rect.bound[0] = window_rect.bound[0] + window_width / 2;
             window_rect.bound[2] = window_rect.bound[0] + window_width;
         }
