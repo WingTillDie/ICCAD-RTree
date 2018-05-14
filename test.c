@@ -2,6 +2,7 @@
 #include "rtree.h"
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define min_width       65.0
 #define min_space       65.0
@@ -10,7 +11,8 @@
 #define max_density     1.0
 #define window_width    10000
 #define layer           9
-#define alpha           0.9
+#define alpha            -0.075
+
 static RTREEMBR chip_boundary;
 
 
@@ -26,8 +28,6 @@ char* no_use3;
 struct netlist *next;
 }net;
 net *front=NULL;
-
-
 
 void dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, double space);
 void layer_dummy_insert(RTREENODE *root);
@@ -81,8 +81,7 @@ int main()
 
     printf("finished reading\n");
     while(point!=NULL){
-        RTREEMBR test_rects[]={point->xmin, point->ymin, point->xmax, point->ymax};
-        //printf("%f\n", point->num);;
+        RTREEMBR test_rects ={point->xmin, point->ymin, point->xmax, point->ymax};
         RTreeInsertRect(&test_rects, point->num, &root[point->layer_num - 1], 0);
         point=point->next;
     }
@@ -90,7 +89,7 @@ int main()
 
     for(int i=0; i<layer; i++){
         layer_dummy_insert(root[i]);
-        printf("Layer %d completed\n", i);;
+        printf("Layer %d completed\n", i+1);;
     }
 
     printf("completed\n");
@@ -105,16 +104,16 @@ void layer_dummy_insert(RTREENODE *root){
     RTREEMBR window_rect = {chip_boundary.bound[0], chip_boundary.bound[1], chip_boundary.bound[0] + window_width, chip_boundary.bound[1] + window_width};
     while(window_rect.bound[3] <= chip_boundary.bound[3]){
         while(window_rect.bound[2] <= chip_boundary.bound[2]){
-            //printf("Window rect : %f %f %f %f\n", window_rect);
+            //printf("Window rect : %f %f %f %f\n", window_rect.bound[0], window_rect.bound[1], window_rect.bound[2], window_rect.bound[3]);
             //printf("Initial window rect density : %f\n", RTreeSearchDensity(root, &window_rect));
             double  fill_width = max_fill_width;
             while(RTreeSearchDensity(root, &window_rect) <= min_density && fill_width >= min_width){
-                //printf("Dummy metal fill width : %f\n", fill_width);
+                //printf("Dummy metal fill width : %f Inserted window density : %.3f\n", fill_width, RTreeSearchDensity(root, &window_rect));
                 dummymetalinsert(&root, &window_rect, fill_width, min_space);
-                fill_width = ceil(fill_width * alpha);
+                fill_width = ceil(fill_width * exp(alpha));
             }
-            if(fill_width < min_width && RTreeSearchDensity(root, &window_rect) <= min_density)
-                printf("%f %f %f %f density insufficient", window_rect);
+            if(fill_width < min_width && RTreeSearchDensity(root, &window_rect) < min_density)
+                printf("%f %f %f %f density insufficient\n", window_rect);
             //printf("Dummy metal fill width : %.0f Inserted window density : %.3f Window : %.0f %.0f %.0f %.0f\n", fill_width, RTreeSearchDensity(root, &window_rect), window_rect);
             window_rect.bound[0] = window_rect.bound[0] + window_width / 2;
             window_rect.bound[2] = window_rect.bound[0] + window_width;
@@ -124,29 +123,22 @@ void layer_dummy_insert(RTREENODE *root){
         window_rect.bound[0] = chip_boundary.bound[0];
         window_rect.bound[2] = window_rect.bound[0] + window_width;
     }
-
-
-
 }
 
 void dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, double space){
     double  x = window->bound[0];
     double  y = window->bound[1];
-    int i = 0;
     while(y + 2 * space + fill_width <= window->bound[3]){
         while(x + 2 * space + fill_width <= window->bound[2]){
             RTREEMBR outer_rect = {x, y, x + 2 * space + fill_width, y + 2 * space + fill_width};
             if(!RTreeLeafOverlap(*node, &outer_rect)){
                 RTREEMBR inner_rect = {x + space, y + space, x + space + fill_width, y + space + fill_width};
                 RTreeInsertRect(&inner_rect, -1, node, 0);
-                //printf("%f, %f, %f, %f\n", inner_rect);
+                x = x + space + fill_width;
             }
-            x = x + space ;
+            else x = x + space ;
         }
         y = y + space ;
-        i++;
-        if(i%2) x = window->bound[0] + fill_width / 2.0;
-        else    x = window->bound[0];
-
+        x = window->bound[0];
     }
 }
