@@ -13,8 +13,10 @@
 #define layer           9
 #define alpha            -0.075
 
-static RTREEMBR chip_boundary;
 
+static  RTREEMBR chip_boundary;
+static  double  fill_id = -1.0;
+static  int now_layer;
 
 typedef struct netlist{
 double num;
@@ -29,15 +31,15 @@ struct netlist *next;
 }net;
 net *front=NULL;
 
-void dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, double space);
-void layer_dummy_insert(RTREENODE *root);
+void dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, double space, FILE *fptr);
+void layer_dummy_insert(RTREENODE *root, FILE *fptr);
 
-void read(){
+void read(char  file_name[]){
     net *tmp, *rear=NULL;
     FILE *fp;
     char buffer[256];
     char *delim = " ";
-    fp = fopen("circuit2.cut","r");     /* open file pointer */
+    fp = fopen(file_name, "r");     /* open file pointer */
     if(fp){// if file exist...
         fgets(buffer, 256, fp);
         chip_boundary.bound[0] = atof(strtok(buffer, delim));
@@ -71,12 +73,19 @@ void read(){
 
 int main()
 {
+    char    filename[] = "circuit2";
+    char    input_file_name[20];
+    char    output_file_name[20];
+    strcpy(input_file_name, filename);
+    strcpy(output_file_name, filename);
+    strcat(input_file_name, ".cut");
+    strcat(output_file_name, ".out");
 
     RTREENODE* root[layer];
     for(int i=0; i<layer; i++)
         root[i] = RTreeCreate();
 
-    read();
+    read(input_file_name);
     net *point = front;
 
     printf("finished reading\n");
@@ -86,12 +95,14 @@ int main()
         point=point->next;
     }
     printf("finished building rtree\n");
-
+    FILE *fPtr;
+    fPtr = fopen(output_file_name,"w");
     for(int i=0; i<layer; i++){
-        layer_dummy_insert(root[i]);
+        now_layer = now_layer + 1;
+        layer_dummy_insert(root[i], fPtr);
         printf("Layer %d completed\n", i+1);;
     }
-
+    fclose(fPtr);
     printf("completed\n");
     //PrintAllTheLeaves(root);
     //RTreePrintNode( root, 0);
@@ -100,7 +111,7 @@ int main()
     return 0;
 }
 
-void layer_dummy_insert(RTREENODE *root){
+void layer_dummy_insert(RTREENODE *root, FILE *fPtr){
     RTREEMBR window_rect = {chip_boundary.bound[0], chip_boundary.bound[1], chip_boundary.bound[0] + window_width, chip_boundary.bound[1] + window_width};
     while(window_rect.bound[3] <= chip_boundary.bound[3]){
         while(window_rect.bound[2] <= chip_boundary.bound[2]){
@@ -109,7 +120,7 @@ void layer_dummy_insert(RTREENODE *root){
             double  fill_width = max_fill_width;
             while(RTreeSearchDensity(root, &window_rect) <= min_density && fill_width >= min_width){
                 //printf("Dummy metal fill width : %f Inserted window density : %.3f\n", fill_width, RTreeSearchDensity(root, &window_rect));
-                dummymetalinsert(&root, &window_rect, fill_width, min_space);
+                dummymetalinsert(&root, &window_rect, fill_width, min_space, fPtr);
                 fill_width = ceil(fill_width * exp(alpha));
             }
             if(fill_width < min_width && RTreeSearchDensity(root, &window_rect) < min_density)
@@ -125,7 +136,7 @@ void layer_dummy_insert(RTREENODE *root){
     }
 }
 
-void dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, double space){
+void dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, double space, FILE *fPtr){
     double  x = window->bound[0];
     double  y = window->bound[1];
     while(y + 2 * space + fill_width <= window->bound[3]){
@@ -133,7 +144,9 @@ void dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, dou
             RTREEMBR outer_rect = {x, y, x + 2 * space + fill_width, y + 2 * space + fill_width};
             if(!RTreeLeafOverlap(*node, &outer_rect)){
                 RTREEMBR inner_rect = {x + space, y + space, x + space + fill_width, y + space + fill_width};
-                RTreeInsertRect(&inner_rect, -1, node, 0);
+                RTreeInsertRect(&inner_rect, /*-1*/fill_id, node, 0);
+                fprintf(fPtr, "%.f %.f %.f %.f %.f 0 %d fill\n", -fill_id, inner_rect.bound[0], inner_rect.bound[1], inner_rect.bound[2], inner_rect.bound[3], now_layer);
+                fill_id--;
                 x = x + space + fill_width;
             }
             else x = x + space ;
