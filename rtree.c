@@ -684,7 +684,7 @@ int RTreeOverlap(RTREEMBR *rc1, RTREEMBR *rc2)
     {
         j = i + DIMS_NUMB;  /* index for high sides */
 
-        if (rc1->bound[i] > rc2->bound[j] || rc2->bound[i] > rc1->bound[j])
+        if (rc1->bound[i] >= rc2->bound[j] || rc2->bound[i] >= rc1->bound[j])
             return FALSE;
     }
     return TRUE;

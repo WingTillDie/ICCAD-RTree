@@ -10,13 +10,13 @@
 #define min_density     0.4
 #define max_density     1.0
 #define window_width    10000
-#define layer           9
+#define total_layer           9
 #define alpha            -0.075
 
 
 static  RTREEMBR chip_boundary;
 static  double  fill_id = -1.0;
-static  int now_layer;
+
 
 typedef struct netlist{
 double num;
@@ -31,22 +31,22 @@ struct netlist *next;
 }net;
 net *front=NULL;
 
-void dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, double space, FILE *fptr);
-void layer_dummy_insert(RTREENODE *root, FILE *fptr);
+void dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, double space, FILE *fptr, int layer);
+void layer_dummy_insert(RTREENODE *root, FILE *fptr, int layer);
 
 void read(char  file_name[]){
     net *tmp, *rear=NULL;
-    FILE *fp;
+    FILE *fPtr;
     char buffer[256];
     char *delim = " ";
-    fp = fopen(file_name, "r");     /* open file pointer */
-    if(fp){// if file exist...
-        fgets(buffer, 256, fp);
+    fPtr = fopen(file_name, "r");     /* open file pointer */
+    if(fPtr){// if file exist...
+        fgets(buffer, 256, fPtr);
         chip_boundary.bound[0] = atof(strtok(buffer, delim));
         chip_boundary.bound[1] = atof(strtok(NULL, delim));
         chip_boundary.bound[2] = atof(strtok(NULL, delim));
         chip_boundary.bound[3] = atof(strtok(NULL, ":"));
-        while(fgets(buffer, 256, fp)!=NULL){
+        while(fgets(buffer, 256, fPtr)!=NULL){
             tmp = (net*)malloc(sizeof(net));
             tmp->next = NULL;
             tmp->num = atof(strtok(buffer, delim));
@@ -67,13 +67,13 @@ void read(char  file_name[]){
             }
         }
     }
-    fclose(fp);
+    fclose(fPtr);
 }
 
 
 int main()
 {
-    char    filename[] = "circuit2";
+    char    filename[] = "circuit1";
     char    input_file_name[20];
     char    output_file_name[20];
     strcpy(input_file_name, filename);
@@ -81,8 +81,8 @@ int main()
     strcat(input_file_name, ".cut");
     strcat(output_file_name, ".out");
 
-    RTREENODE* root[layer];
-    for(int i=0; i<layer; i++)
+    RTREENODE* root[total_layer];
+    for(int i=0; i<total_layer; i++)
         root[i] = RTreeCreate();
 
     read(input_file_name);
@@ -97,21 +97,20 @@ int main()
     printf("finished building rtree\n");
     FILE *fPtr;
     fPtr = fopen(output_file_name,"w");
-    for(int i=0; i<layer; i++){
-        now_layer = now_layer + 1;
-        layer_dummy_insert(root[i], fPtr);
+    for(int i=0; i<total_layer; i++){
+        layer_dummy_insert(root[i], fPtr, i+1);
         printf("Layer %d completed\n", i+1);;
     }
     fclose(fPtr);
     printf("completed\n");
     //PrintAllTheLeaves(root);
     //RTreePrintNode( root, 0);
-    for(int i=0; i<layer; i++)
+    for(int i=0; i<total_layer; i++)
         RTreeDestroy (root[i]);
     return 0;
 }
 
-void layer_dummy_insert(RTREENODE *root, FILE *fPtr){
+void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer){
     RTREEMBR window_rect = {chip_boundary.bound[0], chip_boundary.bound[1], chip_boundary.bound[0] + window_width, chip_boundary.bound[1] + window_width};
     while(window_rect.bound[3] <= chip_boundary.bound[3]){
         while(window_rect.bound[2] <= chip_boundary.bound[2]){
@@ -120,11 +119,11 @@ void layer_dummy_insert(RTREENODE *root, FILE *fPtr){
             double  fill_width = max_fill_width;
             while(RTreeSearchDensity(root, &window_rect) <= min_density && fill_width >= min_width){
                 //printf("Dummy metal fill width : %f Inserted window density : %.3f\n", fill_width, RTreeSearchDensity(root, &window_rect));
-                dummymetalinsert(&root, &window_rect, fill_width, min_space, fPtr);
+                dummymetalinsert(&root, &window_rect, fill_width, min_space, fPtr, layer);
                 fill_width = ceil(fill_width * exp(alpha));
             }
             if(fill_width < min_width && RTreeSearchDensity(root, &window_rect) < min_density)
-                printf("%f %f %f %f density insufficient\n", window_rect);
+                printf("%f %f %f %f density insufficient\nDensity %f\n", window_rect, RTreeSearchDensity(root, &window_rect));
             //printf("Dummy metal fill width : %.0f Inserted window density : %.3f Window : %.0f %.0f %.0f %.0f\n", fill_width, RTreeSearchDensity(root, &window_rect), window_rect);
             window_rect.bound[0] = window_rect.bound[0] + window_width / 2;
             window_rect.bound[2] = window_rect.bound[0] + window_width;
@@ -136,7 +135,7 @@ void layer_dummy_insert(RTREENODE *root, FILE *fPtr){
     }
 }
 
-void dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, double space, FILE *fPtr){
+void dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, double space, FILE *fPtr, int layer){
     double  x = window->bound[0];
     double  y = window->bound[1];
     while(y + 2 * space + fill_width <= window->bound[3]){
@@ -145,9 +144,8 @@ void dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, dou
             if(!RTreeLeafOverlap(*node, &outer_rect)){
                 RTREEMBR inner_rect = {x + space, y + space, x + space + fill_width, y + space + fill_width};
                 RTreeInsertRect(&inner_rect, /*-1*/fill_id, node, 0);
-                fprintf(fPtr, "%.f %.f %.f %.f %.f 0 %d fill\n", -fill_id, inner_rect.bound[0], inner_rect.bound[1], inner_rect.bound[2], inner_rect.bound[3], now_layer);
-                fill_id--;
-                x = x + space + fill_width;
+                fprintf(fPtr, "%.f %.f %.f %.f %.f 0 %d fill\n", -(fill_id--), inner_rect.bound[0], inner_rect.bound[1], inner_rect.bound[2], inner_rect.bound[3], layer);
+                x = x + fill_width + space;
             }
             else x = x + space ;
         }
