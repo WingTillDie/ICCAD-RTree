@@ -36,30 +36,30 @@ typedef double REALTYPE;
 
 typedef struct _RTREEMBR
 {
-    REALTYPE bound[SIDES_NUMB]; /* xmin,ymin,...,xmax,ymax,... */
-}RTREEMBR;
+	REALTYPE bound[SIDES_NUMB]; /* xmin,ymin,...,xmax,ymax,... */
+} RTREEMBR;
 
 typedef struct _RTREEBRANCH
 {
-    RTREEMBR    mbr;
-    struct _RTREENODE *child;    /* mbr id */
-}RTREEBRANCH;
+	RTREEMBR    mbr;
+	struct _RTREENODE *child;    /* mbr id */
+} RTREEBRANCH;
 
 /* max branching factor of a node */
 #define MAXCARD (int)((PAGE_SIZE-(2*sizeof(int))) / sizeof(RTREEBRANCH))
 
 typedef struct _RTREENODE
 {
-    int    count;
-    int    height; /* 0 is leaf, others positive */
-    RTREEBRANCH  branch[MAXCARD];
-}RTREENODE;
+	int    count;
+	int    height; /* 0 is leaf, others positive */
+	RTREEBRANCH  branch[MAXCARD];
+} RTREENODE;
 
 typedef struct _RTREELISTNODE
 {
-     struct _RTREELISTNODE    *next;
-     RTREENODE        *node;
-}RTREELISTNODE;
+	struct _RTREELISTNODE    *next;
+	RTREENODE        *node;
+} RTREELISTNODE;
 
 /*
 * If passed to a tree search, this callback function will be called
@@ -249,7 +249,7 @@ REALTYPE RTreeSearchDensity(RTREENODE *node, RTREEMBR *rc);
 
 int PrintAllTheLeaves(RTREENODE *node);
 
-int RTREESearchLeafmbr(RTREENODE *node, int id, RTREEMBR *mbr);
+int RTREESearchLeafmbr(RTREENODE *node, long long id, RTREEMBR *mbr);
 
 int RTreeLeafOverlap(RTREENODE *node, RTREEMBR *rc);
 #endif /* RTREE_H_INCLUDED */
