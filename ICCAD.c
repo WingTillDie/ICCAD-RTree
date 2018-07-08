@@ -55,8 +55,8 @@ else
 printf("USAGE: ./cada025 <config filename>\ne.g. ./cada025 circuit1.conf\n");*/
 
 
-	//process("circuit1.conf");
-	//process("circuit2.config");
+	process("circuit1.conf");
+	process("circuit2.config");
 	process("circuit3.config");
 	process("circuit4.config");
 	process("circuit5.config");

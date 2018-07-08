@@ -36,7 +36,7 @@ typedef struct netlist
 	struct netlist *next;
 } net;
 net *front = NULL, *prev;
-/*
+
 void pattern(RTREENODE **node, RTREEMBR *window, double space, FILE *fPtr, int layer);
 void dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, double space, FILE *fPtr, int layer, int mode, RTREENODE **root_critical_expand);
 void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_critical_expand);
@@ -47,7 +47,7 @@ void insert_hori_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, dou
 void insert_vert_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, double fill_width, int layer, FILE *fPtr);
 int horizontal_vertical(RTREEMBR *window, RTREENODE *root);
 void lastcheck(RTREENODE *root, int layer);
-*/
+
 void printrule()
 {
 	int i;
