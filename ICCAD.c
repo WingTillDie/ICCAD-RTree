@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include "DummyInsert.h"
 
+#define runall
+
 /*
 void printTest(char *a)
 {
@@ -48,19 +50,20 @@ int main(int argc, char **argv)
 	scanf("%s", &a);
 	printf("%s", a);
 	process(a);
-	*//*
-if(argc==2)
-process(argv[1]);
-else
-printf("USAGE: ./cada025 <config filename>\ne.g. ./cada025 circuit1.conf\n");*/
+	*/
+	#ifndef runall
+		if(argc==2)
+		process(argv[1]);
+		else
+		printf("USAGE: ./cada025 <config filename>\ne.g. ./cada025 circuit1.conf\n");
 
-
+	#else
 	process("circuit1.conf");
 	process("circuit2.config");
 	process("circuit3.config");
 	process("circuit4.config");
 	process("circuit5.config");
-
+	#endif
 	return 0;
 
 }
