@@ -1,3 +1,4 @@
 circuit?.fill
 circuit?.cut
 sendToCIC.sh
+*.swp

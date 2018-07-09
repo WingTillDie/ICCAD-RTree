@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "DummyInsert.h"
 
-#define runall
+//#define runall
 
 /*
 void printTest(char *a)
