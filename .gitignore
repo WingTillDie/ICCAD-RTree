@@ -2,3 +2,7 @@ circuit?.fill
 circuit?.cut
 sendToCIC.sh
 *.swp
+process.dat
+rule.dat
+circuit?.conf*
+cada025
