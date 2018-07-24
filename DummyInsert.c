@@ -7,7 +7,7 @@
 #include "DummyInsert.h"
 
 //#define design_transform
-#define svg
+//#define svg
 #define	svglayer	8
 #define critical_expand_factor  6
 #define	alpha	-0.15
