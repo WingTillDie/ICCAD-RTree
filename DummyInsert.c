@@ -203,7 +203,7 @@ void rtree(char input_file_name[], char output_file_name[])
 				fprintf(fPtr, "<rect width=\"%f\" height=\"%f\" x=\"%f\" y=\"%f\" style=\"fill:#000000;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1\"/>\n", test_rects.bound[2] - test_rects.bound[0], test_rects.bound[3] - test_rects.bound[1], test_rects.bound[0] - chip_boundary.bound[0], chip_boundary.bound[3] - test_rects.bound[3]);
 		}
 #else
-		fprintf(fPtr, "%.f %.f %.f %.f %.f %d %d %s\n", fill_id, test_rects.bound[0], test_rects.bound[1], test_rects.bound[2], test_rects.bound[3], point->net, point->layer_num, point->metal_type);
+		//fprintf(fPtr, "%.f %.f %.f %.f %.f %d %d %s\n", fill_id, test_rects.bound[0], test_rects.bound[1], test_rects.bound[2], test_rects.bound[3], point->net, point->layer_num, point->metal_type);
 #endif
 		prev = point;
 		point=point->next;
