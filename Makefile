@@ -1,10 +1,10 @@
 SRC = $(wildcard *.c)
 OBJ = $(SRC:.c=.o)
 
-CFLAGS = -g -O0
-LDFLAGS = -lm
+CFLAGS = $(CFLAGS-$@) -g -O3 -ftree-parallelize-loops=7
+LDFLAGS = -lm -fopenmp
 
-TARGET = output
+TARGET = cada025
 
 all: $(TARGET)
 
@@ -13,3 +13,7 @@ $(TARGET): $(OBJ)
 
 clean:
 	rm -rf *.o $(TARGET)
+
+CFLAGS-asm += -S
+asm:
+	$(CC) $(CFLAGS) $(SRC)
