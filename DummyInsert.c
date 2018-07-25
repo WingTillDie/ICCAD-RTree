@@ -15,8 +15,6 @@
 static  RTREEMBR chip_boundary;
 static  double fill_id = 0;
 
-
-
 typedef struct DRC_ERROR
 {
 	RTREEMBR error_rect;
@@ -37,16 +35,21 @@ typedef struct netlist
 } net;
 net *front = NULL, *prev;
 
-void pattern(RTREENODE **node, RTREEMBR *window, double space, FILE *fPtr, int layer);
-void dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, double space, FILE *fPtr, int layer, int mode, RTREENODE **root_critical_expand);
+void printrule();
+void read(char  file_name[]);
+void critical_to_matrix(int max_critical_net, int critical_type[]);
 void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_critical_expand);
 void printPrev(FILE *fPtr);
 void printEnd(FILE *fPtr);
-void check_layer(RTREENODE *root, int layer, FILE *fPtr, DRC_ERROR* head, RTREENODE *root_critical_expand);
+void dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, double space, FILE *fPtr, int layer, int mode, RTREENODE **root_critical_expand);
+void pattern(RTREENODE **node, RTREEMBR *window, double space, FILE *fPtr, int layer);
+int horizontal_vertical(RTREEMBR *window, RTREENODE *root);
 void insert_hori_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, double fill_width, int layer, FILE *fPtr);
 void insert_vert_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, double fill_width, int layer, FILE *fPtr);
-int horizontal_vertical(RTREEMBR *window, RTREENODE *root);
+void check_layer(RTREENODE *root, int layer, FILE *fPtr, DRC_ERROR* head, RTREENODE *root_critical_expand);
 void lastcheck(RTREENODE *root, int layer);
+void print_rect(RTREEMBR *rect, int layer, FILE *fPtr);
+void insert_empty_window(RTREENODE **root, RTREEMBR *window, int layer, FILE *fPtr, double width);
 
 void printrule()
 {
@@ -57,7 +60,6 @@ void printrule()
 		printf("%d %5.f %5.f %5.f %5.f %5.f\n", i, min_width[i], min_space[i], max_fill_width[i], min_density[i], max_density[i]);
 	}
 }
-
 
 void read(char  file_name[])
 {
@@ -110,8 +112,6 @@ void read(char  file_name[])
 	fclose(fPtr);
 }
 
-
-
 void critical_to_matrix(int max_critical_net, int critical_type[])
 {
 	int i;
@@ -127,121 +127,6 @@ void critical_to_matrix(int max_critical_net, int critical_type[])
 	}
 }
 
-
-
-void rtree(char input_file_name[], char output_file_name[])
-{
-	time_t start, end;
-	int i;
-	start = time(NULL);
-	front = NULL;
-	fill_id = 0;
-	int max_critical_net = critical_net_head->id;
-	int critical_type[max_critical_net + 1];
-
-	critical_to_matrix(max_critical_net, critical_type);
-
-	printf("Input filename : %s\n", input_file_name);
-	printrule();
-#ifdef svg
-	strcat(output_file_name, ".svg");
-#endif
-
-	RTREENODE* root[total_layer];
-	RTREENODE* root_critical_expand[total_layer];
-
-	for(i=0; i<total_layer; i++)
-	{
-		root[i] = RTreeCreate();
-		root_critical_expand[i] = RTreeCreate();
-	}
-
-
-	read(input_file_name);
-	net *point = front;
-
-	printf("Finished reading\n");
-	FILE *fPtr;
-	fPtr = fopen(output_file_name,"w");
-
-#ifdef svg
-	printPrev(fPtr);
-#else
-	fprintf(fPtr, "%.f %.f %.f %.f; chip boundary\n", chip_boundary.bound[0], chip_boundary.bound[1], chip_boundary.bound[2], chip_boundary.bound[3]);
-#endif
-
-
-	while(point!=NULL)
-	{
-#ifdef design_transform
-		RTREEMBR test_rects = {{point->ymin, point->xmin, point->ymax, point->xmax}};
-#else
-		RTREEMBR test_rects = {{point->xmin, point->ymin, point->xmax, point->ymax}};
-#endif
-
-		RTreeInsertRect(&test_rects, point->num, &root[point->layer_num - 1], 0);
-		fill_id++;
-
-		if(point->net < max_critical_net && critical_type[point->net])
-		{
-			RTREEMBR critical_expand_rects = {{point->xmin - critical_expand_factor * min_space[point->layer_num - 1], point->ymin - critical_expand_factor * min_space[point->layer_num - 1], point->xmax + critical_expand_factor * min_space[point->layer_num - 1], point->ymax + critical_expand_factor * min_space[point->layer_num - 1]}};
-			RTreeInsertRect(&critical_expand_rects, point->num, &root_critical_expand[point->layer_num - 1], 0);
-#ifdef svg
-			if(point->layer_num == svglayer)
-				fprintf(fPtr, "<rect width=\"%f\" height=\"%f\" x=\"%f\" y=\"%f\" style=\"fill:none;stroke:#ff00ff;stroke-width:50;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1;opacity:1;stroke-opacity:1\"/>\n", critical_expand_rects.bound[2] - critical_expand_rects.bound[0], critical_expand_rects.bound[3] - critical_expand_rects.bound[1], critical_expand_rects.bound[0] - chip_boundary.bound[0], chip_boundary.bound[3] - critical_expand_rects.bound[3]);
-#endif
-		}
-
-
-
-#ifdef svg
-		if(point->layer_num == svglayer)
-		{
-			if(point->net < max_critical_net && critical_type[point->net])
-				fprintf(fPtr, "<rect width=\"%f\" height=\"%f\" x=\"%f\" y=\"%f\" style=\"fill:#ff00ff;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1\"/>\n", test_rects.bound[2] - test_rects.bound[0], test_rects.bound[3] - test_rects.bound[1], test_rects.bound[0] - chip_boundary.bound[0], chip_boundary.bound[3] - test_rects.bound[3]);
-			else
-				fprintf(fPtr, "<rect width=\"%f\" height=\"%f\" x=\"%f\" y=\"%f\" style=\"fill:#000000;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1\"/>\n", test_rects.bound[2] - test_rects.bound[0], test_rects.bound[3] - test_rects.bound[1], test_rects.bound[0] - chip_boundary.bound[0], chip_boundary.bound[3] - test_rects.bound[3]);
-		}
-#else
-		//fprintf(fPtr, "%.f %.f %.f %.f %.f %d %d %s\n", fill_id, test_rects.bound[0], test_rects.bound[1], test_rects.bound[2], test_rects.bound[3], point->net, point->layer_num, point->metal_type);
-#endif
-		prev = point;
-		point=point->next;
-		free(prev);
-	}
-
-	printf("Finished building rtree\n");
-
-
-#ifdef svg
-	layer_dummy_insert(root[svglayer-1], fPtr, svglayer-1, root_critical_expand[svglayer-1]);
-	printf("Layer %d completed\n", svglayer);
-#else
-	for(i=0; i<total_layer; i++)
-	{
-		layer_dummy_insert(root[i], fPtr, i, root_critical_expand[i]);
-		printf("Layer %d completed\n", i + 1);
-	}
-#endif
-
-
-#ifdef svg
-	printEnd(fPtr);
-#endif
-
-	fclose(fPtr);
-	for(i=0; i<total_layer; i++)
-	{
-		RTreeDestroy (root[i]);
-		RTreeDestroy (root_critical_expand[i]);
-	}
-
-	end = time(NULL);
-	printf("Time = %.f\n", difftime(end, start));
-	printf("Program completed!\n");
-}
-
-
 void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_critical_expand)
 {
 	DRC_ERROR *tmp = NULL, *head = NULL, *tail = NULL;
@@ -254,11 +139,14 @@ void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_
 			fprintf(fPtr, "<rect width=\"%f\" height=\"%f\" x=\"%f\" y=\"%f\" style=\"fill:none;stroke:#000000;stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1;opacity:1;stroke-opacity:1\"/>\n", window_rect.bound[2] - window_rect.bound[0], window_rect.bound[3] - window_rect.bound[1], window_rect.bound[0] - chip_boundary.bound[0], chip_boundary.bound[3] - window_rect.bound[3]);
 #endif
 			double fill_width = max_fill_width[layer];
-			while(RTreeSearchDensity(root, &window_rect) <= min_density[layer] && fill_width >= min_width[layer])
-			{
-				dummymetalinsert(&root, &window_rect, fill_width, min_space[layer], fPtr, layer, 0, &root_critical_expand);
-				fill_width = ceil(fill_width * exp(alpha));
-			}
+			if(RTreeSearchDensity(root, &window_rect) == 0)
+				insert_empty_window(&root, &window_rect, layer, fPtr, window_width / 2.0);
+			else
+				while(RTreeSearchDensity(root, &window_rect) <= min_density[layer] && fill_width >= min_width[layer])
+				{
+					dummymetalinsert(&root, &window_rect, fill_width, min_space[layer], fPtr, layer, 0, &root_critical_expand);
+					fill_width = ceil(fill_width * exp(alpha));
+				}
 			if(RTreeSearchDensity(root, &window_rect) < min_density[layer])
 			{
 				fill_width = min_width[layer];
@@ -298,12 +186,12 @@ void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_
 	}
 	else
 		printf("Layer %d no need to check\n", layer+1);
-	lastcheck(root, layer);
+	//lastcheck(root, layer);
 }
 
 void printPrev(FILE *fPtr)
 {
-	fprintf(fPtr, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><svg xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:cc=\"http://creativecommons.org/ns#\" xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns=\"http://www.w3.org/2000/svg\" id=\"svg8\" version=\"1.1\"> <defs id=\"defs2\" /> <metadata id=\"metadata5\"> <rdf:RDF> <cc:Work rdf:about=\"\"> <dc:format>image/svg+xml</dc:format> <dc:type rdf:resource=\"http://purl.org/dc/dcmitype/StillImage\" /> <dc:title></dc:title> </cc:Work> </rdf:RDF> </metadata> <g id=\"layer1\">\n", chip_boundary.bound[0], chip_boundary.bound[1], chip_boundary.bound[2], chip_boundary.bound[3], chip_boundary.bound[3] - chip_boundary.bound[1], chip_boundary.bound[2] - chip_boundary.bound[0]);
+	fprintf(fPtr, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><svg xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:cc=\"http://creativecommons.org/ns#\" xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns=\"http://www.w3.org/2000/svg\" id=\"svg8\" version=\"1.1\"> <defs id=\"defs2\" /> <metadata id=\"metadata5\"> <rdf:RDF> <cc:Work rdf:about=\"\"> <dc:format>image/svg+xml</dc:format> <dc:type rdf:resource=\"http://purl.org/dc/dcmitype/StillImage\" /> <dc:title></dc:title> </cc:Work> </rdf:RDF> </metadata> <g id=\"layer1\">\n");
 }
 
 void printEnd(FILE *fPtr)
@@ -364,8 +252,6 @@ void dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, dou
 		x = window->bound[0] - space;
 	}
 }
-
-//Unused
 
 void pattern(RTREENODE **node, RTREEMBR *window, double space, FILE *fPtr, int layer)
 {
@@ -575,7 +461,7 @@ void check_layer(RTREENODE *root, int layer, FILE *fPtr, DRC_ERROR* head, RTREEN
 					//printf("Finished inserting\n");
 					if(RTreeSearchDensity(root, &window_rect) < min_density[layer])
 					{
-						printf("Trouble!!\nlayer %d %.f %.f %.f %.f density insufficient\nOriginal Density %f After density %f\n", layer+1, window_rect.bound[0], window_rect.bound[1], window_rect.bound[2], window_rect.bound[3], original_density, RTreeSearchDensity(root, &window_rect), fill_width);
+						printf("Trouble!!\nlayer %d %.f %.f %.f %.f density insufficient\nOriginal Density %f After density %f\n", layer+1, window_rect.bound[0], window_rect.bound[1], window_rect.bound[2], window_rect.bound[3], original_density, RTreeSearchDensity(root, &window_rect));
 #ifdef svg
 						fprintf(fPtr, "<rect width=\"%f\" height=\"%f\" x=\"%f\" y=\"%f\" style=\"fill:none;stroke:#fd0000;stroke-width:100;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1;opacity:1;stroke-opacity:1\"/>\n", window_rect.bound[2] - window_rect.bound[0], window_rect.bound[3] - window_rect.bound[1], window_rect.bound[0] - chip_boundary.bound[0], chip_boundary.bound[3] - window_rect.bound[3]);
 #endif
@@ -607,4 +493,157 @@ void lastcheck(RTREENODE *root, int layer)
 		x = x + window_width / 2.0;
 		y = chip_boundary.bound[1];
 	}
+}
+
+void print_rect(RTREEMBR *rect, int layer, FILE *fPtr)
+{
+#ifdef svg
+	fprintf(fPtr, "<rect width=\"%f\" height=\"%f\" x=\"%f\" y=\"%f\" style=\"fill:#c87137;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1\"/>\n", rect->bound[2] - rect->bound[0], rect->bound[3] - rect->bound[1], rect->bound[0] - chip_boundary.bound[0], chip_boundary.bound[3] - rect->bound[3]);
+#else
+	fprintf(fPtr, "%.f %.f %.f %.f %.f 0 %d fill\n", fill_id, rect->bound[0], rect->bound[1], rect->bound[2], rect->bound[3], layer + 1);
+#endif
+}
+
+void insert_empty_window(RTREENODE **root, RTREEMBR *window, int layer, FILE *fPtr, double width)
+{
+	double half_width = ceil(sqrt(width * width * min_density[layer]/4.0)/2.0);
+	if(2 * half_width > max_fill_width[layer])
+	{
+		RTREEMBR left_down_window = {{window->bound[0], window->bound[1], window->bound[0] + width/2.0, window->bound[1] + width/2.0}};
+		RTREEMBR left_up_window = {{window->bound[0], window->bound[1] + width/2.0, window->bound[0] + width/ 2.0, window->bound[3]}};
+		RTREEMBR right_down_window = {{window->bound[0] + width/2.0, window->bound[1], window->bound[2], window->bound[1] + width/2.0}};
+		RTREEMBR right_up_window = {{window->bound[0] + width/2.0, window->bound[1] + width/2.0, window->bound[2], window->bound[3]}};
+		insert_empty_window(root, &left_down_window, layer, fPtr, width/2.0);
+		insert_empty_window(root, &left_up_window, layer, fPtr, width/2.0);
+		insert_empty_window(root, &right_down_window, layer, fPtr, width/2.0);
+		insert_empty_window(root, &right_up_window, layer, fPtr, width/2.0);
+	}
+	else
+	{
+		double x1 = window->bound[0] + width / 4.0;
+		double y1 = window->bound[1] + width / 4.0;
+		double x2 = window->bound[2] - width / 4.0;
+		double y2 = window->bound[3] - width / 4.0;
+		RTREEMBR left_down = {{x1 - half_width, y1 - half_width, x1 + half_width, y1 + half_width}};
+		RTREEMBR left_up = {{x1 - half_width, y2 - half_width, x1 + half_width, y2 + half_width}};
+		RTREEMBR right_down = {{x2 - half_width, y1 - half_width, x2 + half_width, y1 + half_width}};
+		RTREEMBR right_up = {{x2 - half_width, y2 - half_width, x2 + half_width, y2 + half_width}};
+		RTreeInsertRect(&left_down, ++fill_id, root, 0);
+		print_rect(&left_down, layer, fPtr);
+		RTreeInsertRect(&left_up, ++fill_id, root, 0);
+		print_rect(&left_up, layer, fPtr);
+		RTreeInsertRect(&right_down, ++fill_id, root, 0);
+		print_rect(&right_down, layer, fPtr);
+		RTreeInsertRect(&right_up, ++fill_id, root, 0);
+		print_rect(&right_up, layer, fPtr);
+		if(RTreeSearchDensity(*root, window) < min_density[layer])
+			printf("**************failed**************\n");
+	}
+}
+
+
+void rtree(char input_file_name[], char output_file_name[])
+{
+	time_t start, end;
+	int i;
+	start = time(NULL);
+	front = NULL;
+	fill_id = 0;
+	int max_critical_net = critical_net_head->id;
+	int critical_type[max_critical_net + 1];
+
+	critical_to_matrix(max_critical_net, critical_type);
+
+	printf("Input filename : %s\n", input_file_name);
+	printrule();
+#ifdef svg
+	strcat(output_file_name, ".svg");
+#endif
+
+	RTREENODE* root[total_layer];
+	RTREENODE* root_critical_expand[total_layer];
+
+	for(i=0; i<total_layer; i++)
+	{
+		root[i] = RTreeCreate();
+		root_critical_expand[i] = RTreeCreate();
+	}
+
+	read(input_file_name);
+	net *point = front;
+
+	printf("Finished reading\n");
+	FILE *fPtr;
+	fPtr = fopen(output_file_name,"w");
+
+#ifdef svg
+	printPrev(fPtr);
+#else
+	fprintf(fPtr, "%.f %.f %.f %.f; chip boundary\n", chip_boundary.bound[0], chip_boundary.bound[1], chip_boundary.bound[2], chip_boundary.bound[3]);
+#endif
+
+	while(point!=NULL)
+	{
+#ifdef design_transform
+		RTREEMBR test_rects = {{point->ymin, point->xmin, point->ymax, point->xmax}};
+#else
+		RTREEMBR test_rects = {{point->xmin, point->ymin, point->xmax, point->ymax}};
+#endif
+
+		RTreeInsertRect(&test_rects, point->num, &root[point->layer_num - 1], 0);
+		fill_id++;
+
+		if(point->net < max_critical_net && critical_type[point->net])
+		{
+			RTREEMBR critical_expand_rects = {{point->xmin - critical_expand_factor * min_space[point->layer_num - 1], point->ymin - critical_expand_factor * min_space[point->layer_num - 1], point->xmax + critical_expand_factor * min_space[point->layer_num - 1], point->ymax + critical_expand_factor * min_space[point->layer_num - 1]}};
+			RTreeInsertRect(&critical_expand_rects, point->num, &root_critical_expand[point->layer_num - 1], 0);
+#ifdef svg
+			if(point->layer_num == svglayer)
+				fprintf(fPtr, "<rect width=\"%f\" height=\"%f\" x=\"%f\" y=\"%f\" style=\"fill:none;stroke:#ff00ff;stroke-width:50;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1;opacity:1;stroke-opacity:1\"/>\n", critical_expand_rects.bound[2] - critical_expand_rects.bound[0], critical_expand_rects.bound[3] - critical_expand_rects.bound[1], critical_expand_rects.bound[0] - chip_boundary.bound[0], chip_boundary.bound[3] - critical_expand_rects.bound[3]);
+#endif
+		}
+
+#ifdef svg
+		if(point->layer_num == svglayer)
+		{
+			if(point->net < max_critical_net && critical_type[point->net])
+				fprintf(fPtr, "<rect width=\"%f\" height=\"%f\" x=\"%f\" y=\"%f\" style=\"fill:#ff00ff;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1\"/>\n", test_rects.bound[2] - test_rects.bound[0], test_rects.bound[3] - test_rects.bound[1], test_rects.bound[0] - chip_boundary.bound[0], chip_boundary.bound[3] - test_rects.bound[3]);
+			else
+				fprintf(fPtr, "<rect width=\"%f\" height=\"%f\" x=\"%f\" y=\"%f\" style=\"fill:#000000;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1\"/>\n", test_rects.bound[2] - test_rects.bound[0], test_rects.bound[3] - test_rects.bound[1], test_rects.bound[0] - chip_boundary.bound[0], chip_boundary.bound[3] - test_rects.bound[3]);
+		}
+#else
+		//fprintf(fPtr, "%.f %.f %.f %.f %.f %d %d %s\n", fill_id, test_rects.bound[0], test_rects.bound[1], test_rects.bound[2], test_rects.bound[3], point->net, point->layer_num, point->metal_type);
+#endif
+		prev = point;
+		point=point->next;
+		free(prev);
+	}
+
+	printf("Finished building rtree\n");
+
+#ifdef svg
+	layer_dummy_insert(root[svglayer-1], fPtr, svglayer-1, root_critical_expand[svglayer-1]);
+	printf("Layer %d completed\n", svglayer);
+#else
+	for(i=0; i<total_layer; i++)
+	{
+		layer_dummy_insert(root[i], fPtr, i, root_critical_expand[i]);
+		printf("Layer %d completed\n", i + 1);
+	}
+#endif
+
+#ifdef svg
+	printEnd(fPtr);
+#endif
+
+	fclose(fPtr);
+	for(i=0; i<total_layer; i++)
+	{
+		RTreeDestroy (root[i]);
+		RTreeDestroy (root_critical_expand[i]);
+	}
+
+	end = time(NULL);
+	printf("Time = %.f\n", difftime(end, start));
+	printf("Program completed!\n");
 }
