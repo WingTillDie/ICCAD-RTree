@@ -6,3 +6,4 @@ process.dat
 rule.dat
 circuit?.conf*
 cada025
+copyFromCIC.sh
