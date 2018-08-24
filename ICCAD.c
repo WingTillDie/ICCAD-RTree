@@ -58,6 +58,10 @@ int main(int argc, char **argv)
 		printf("USAGE: ./cada025 <config filename>\ne.g. ./cada025 circuit1.conf\n");
 
 	#else
+	printf("Warning!!! Run all mode");
+    for(int i=0; i<50; i++)
+        printf("!");
+    printf("\n");
 	process("circuit1.conf");
 	process("circuit2.config");
 	process("circuit3.config");

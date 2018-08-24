@@ -557,6 +557,10 @@ void rtree(char input_file_name[], char output_file_name[])
 	printf("Input filename : %s\n", input_file_name);
 	printrule();
 #ifdef svg
+	printf("Warning!!! SVG mode");
+	for(int i=0; i<50; i++)
+		printf("!");
+	printf("\n");
 	strcat(output_file_name, ".svg");
 #endif
 
