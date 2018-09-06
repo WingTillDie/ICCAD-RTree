@@ -42,10 +42,10 @@ typedef struct netlist
 	char *metal_type;
 	struct netlist *next;
 } net;
-net *front_net = NULL, *prev;
+net *prev;
 
 void printrule();
-void read(char  file_name[]);
+net* read(char  file_name[]);
 void critical_to_matrix(int max_critical_net, int critical_type[], critical_net *critical_net_head);
 void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_critical_expand);
 void printPrev(FILE *fPtr);
@@ -69,13 +69,14 @@ void printrule()
 	}
 }
 
-void read(char  file_name[])
+net* read(char  file_name[])
 {
 	net *tmp, *rear=NULL;
 	FILE *fPtr;
 	char buffer[256];
 	const char *delim = " ";
 	char *temp;
+	net *front_net = NULL;
 	fPtr = fopen(file_name, "r");     /* open file pointer */
 	if(fPtr) // if file exist...
 	{
@@ -118,6 +119,7 @@ void read(char  file_name[])
 		}
 	}
 	fclose(fPtr);
+	return front_net;
 }
 
 void critical_to_matrix(int max_critical_net, int critical_type[], critical_net *critical_net_head)
@@ -553,7 +555,6 @@ void rtree(char input_file_name[], char output_file_name[], critical_net *critic
 {
 	time_t start, ending;
 	start = time(NULL);
-	front_net = NULL;
 	fill_id = 0;
 	int max_critical_net = critical_net_head->id;
 	int critical_type[max_critical_net + 1];
@@ -579,8 +580,7 @@ void rtree(char input_file_name[], char output_file_name[], critical_net *critic
 		root_critical_expand[i] = RTreeCreate();
 	}
 
-	read(input_file_name);
-	net *point = front_net;
+	net *point = read(input_file_name);
 
 	printf("Finished reading\n");
 	FILE *fPtr;
