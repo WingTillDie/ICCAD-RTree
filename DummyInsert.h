@@ -1,5 +1,4 @@
-#ifndef  DUMMYINSERT_H_INCLUDED
-#define  DUMMYINSERT_H_INCLUDED
+#pragma once
 
 typedef struct critical_net
 {
@@ -17,5 +16,3 @@ int total_layer;
 
 
 void rtree(char input_file_name[], char output_file_name[]);
-
-#endif
