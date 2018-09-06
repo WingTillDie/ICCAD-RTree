@@ -31,13 +31,17 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="DummyInsert.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="DummyInsert.h" />
+		<Unit filename="ICCAD.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="rtree.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="rtree.h" />
-		<Unit filename="test.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Extensions>
 			<code_completion />
 			<envvars />
