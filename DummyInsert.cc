@@ -71,12 +71,11 @@ void printrule()
 net* read(char  file_name[])
 {
 	net *tmp, *rear=NULL;
-	FILE *fPtr;
 	char buffer[256];
 	const char *delim = " ";
 	char *temp;
 	net *front_net = NULL;
-	fPtr = fopen(file_name, "r");     /* open file pointer */
+	FILE *fPtr = fopen(file_name, "r");     /* open file pointer */
 	if(fPtr) // if file exist...
 	{
 		fgets(buffer, 256, fPtr);
@@ -89,7 +88,7 @@ net* read(char  file_name[])
 		chip_boundary.bound[0] = atof(strtok(buffer, delim));
 		chip_boundary.bound[1] = atof(strtok(NULL, delim));
 		chip_boundary.bound[2] = atof(strtok(NULL, delim));
-		chip_boundary.bound[3] = atof(strtok(NULL, ":"));
+		chip_boundary.bound[3] = atof(strtok(NULL, ";"));
 #endif
 		while(fgets(buffer, 256, fPtr)!=NULL)
 		{
@@ -552,9 +551,7 @@ void insert_empty_window(RTREENODE **root, RTREEMBR *window, int layer, FILE *fP
 
 void rtree(char input_file_name[], char output_file_name[], critical_net *critical_net_head)
 {
-	time_t start, ending;
-	start = time(NULL);
-	fill_id = 0;
+	time_t start=time(NULL), ending;
 	int max_critical_net = critical_net_head->id;
 	int critical_type[max_critical_net + 1];
 
