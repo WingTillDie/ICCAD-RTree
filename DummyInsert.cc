@@ -62,9 +62,8 @@ void insert_empty_window(RTREENODE **root, RTREEMBR *window, int layer, FILE *fP
 
 void printrule()
 {
-	int i;
 	printf("window width: %3.f\n", window_width);
-	for(i=0; i<total_layer; i++)
+	for(int i=0; i<total_layer; i++)
 	{
 		printf("%d %5.f %5.f %5.f %5.f %5.f\n", i, min_width[i], min_space[i], max_fill_width[i], min_density[i], max_density[i]);
 	}
@@ -123,8 +122,7 @@ void read(char  file_name[])
 
 void critical_to_matrix(int max_critical_net, int critical_type[], critical_net *critical_net_head)
 {
-	int i;
-	for(i=0; i<max_critical_net + 1; i++)
+	for(int i=0; i<max_critical_net + 1; i++)
 		critical_type[i] = 0;
 	critical_net *ptr = critical_net_head, *prev;
 	while(ptr != NULL)
@@ -414,7 +412,7 @@ void insert_vert_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, dou
 
 void check_layer(RTREENODE *root, int layer, FILE *fPtr, DRC_ERROR* head, RTREENODE *root_critical_expand)
 {
-	int i, way;
+	int way;
 	DRC_ERROR* prev;
 	while(head!= NULL)
 	{
@@ -423,7 +421,7 @@ void check_layer(RTREENODE *root, int layer, FILE *fPtr, DRC_ERROR* head, RTREEN
 		RTREEMBR left_down = {{window.bound[0] - window_width/2.0, window.bound[1] - window_width/2.0, window.bound[2], window.bound[3]}};
 		RTREEMBR right_up = {{window.bound[0], window.bound[1], window.bound[2]  + window_width / 2.0, window.bound[3]  + window_width / 2.0}};
 		RTREEMBR right_down = {{window.bound[0], window.bound[1] - window_width/2.0, window.bound[2]  + window_width / 2.0, window.bound[3]}};
-		for(i = 0; i < 4; i++)
+		for(int i = 0; i < 4; i++)
 		{
 			RTREEMBR window_rect;
 			switch(i)
@@ -554,7 +552,6 @@ void insert_empty_window(RTREENODE **root, RTREEMBR *window, int layer, FILE *fP
 void rtree(char input_file_name[], char output_file_name[], critical_net *critical_net_head)
 {
 	time_t start, ending;
-	int i;
 	start = time(NULL);
 	front_net = NULL;
 	fill_id = 0;
@@ -576,7 +573,7 @@ void rtree(char input_file_name[], char output_file_name[], critical_net *critic
 	RTREENODE* root[total_layer];
 	RTREENODE* root_critical_expand[total_layer];
 
-	for(i=0; i<total_layer; i++)
+	for(int i=0; i<total_layer; i++)
 	{
 		root[i] = RTreeCreate();
 		root_critical_expand[i] = RTreeCreate();
@@ -638,7 +635,7 @@ void rtree(char input_file_name[], char output_file_name[], critical_net *critic
 	layer_dummy_insert(root[svglayer-1], fPtr, svglayer-1, root_critical_expand[svglayer-1]);
 	printf("Layer %d completed\n", svglayer);
 #else
-	for(i=0; i<total_layer; i++)
+	for(int i=0; i<total_layer; i++)
 	{
 		layer_dummy_insert(root[i], fPtr, i, root_critical_expand[i]);
 		printf("Layer %d completed\n", i + 1);
@@ -650,7 +647,7 @@ void rtree(char input_file_name[], char output_file_name[], critical_net *critic
 #endif
 
 	fclose(fPtr);
-	for(i=0; i<total_layer; i++)
+	for(int i=0; i<total_layer; i++)
 	{
 		RTreeDestroy (root[i]);
 		RTreeDestroy (root_critical_expand[i]);

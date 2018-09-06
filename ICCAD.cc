@@ -94,7 +94,7 @@ void process(char filename[])
 	char *critical;
 	char output[20], rule_file[20], process_file[20];
 	char *get_first;
-	int index, i;
+	int index;
 	critical_net *critical_net_head = NULL;
 	if(fp==NULL)
 	{
@@ -220,7 +220,7 @@ void process(char filename[])
 		}
 	}
 	/*
-	for(i=0; i<total_layer; i++){
+	for(int i=0; i<total_layer; i++){
 	    printf("%f %f %f %f %f\n", min_width[i], min_space[i], max_fill_width[i], min_density[i], max_density[i]);
 	}*/
 

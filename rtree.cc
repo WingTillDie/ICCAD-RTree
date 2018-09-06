@@ -78,12 +78,10 @@ static int set_max(int *which, int new_max)
  */
 static void _RTreeGetBranches(RTREENODE *node, RTREEBRANCH *br)
 {
-	int i;
-
 	assert(node && br);
 
 	/* load the branch buffer */
-	for (i=0; i<MAXKIDS(node); i++)
+	for (int i=0; i<MAXKIDS(node); i++)
 	{
 		assert(node->branch[i].child); /* n should have every entry full */
 		BranchBuf[i] = node->branch[i];
@@ -95,7 +93,7 @@ static void _RTreeGetBranches(RTREENODE *node, RTREEBRANCH *br)
 	/* calculate mbr containing all in the set */
 	CoverSplit = BranchBuf[0].mbr;
 
-	for (i=1; i<MAXKIDS(node)+1; i++)
+	for (int i=1; i<MAXKIDS(node)+1; i++)
 	{
 		CoverSplit = RTreeCombineRect(&CoverSplit, &BranchBuf[i].mbr);
 	}
@@ -132,17 +130,17 @@ static void _RTreeClassify(int i, int group, RTREEPARTITION *p)
  */
 static void _RTreePickSeeds(RTREEPARTITION *p)
 {
-	int i, j, seed0=0, seed1=0;
+	int seed0=0, seed1=0;
 	REALTYPE worst, waste, area[MAXCARD+1];
 
-	for (i=0; i<p->total; i++)
+	for (int i=0; i<p->total; i++)
 		area[i] = RTreeRectSphericalVolume(&BranchBuf[i].mbr);
 
 	worst = -CoverSplitArea - 1;
 
-	for (i=0; i<p->total-1; i++)
+	for (int i=0; i<p->total-1; i++)
 	{
-		for (j=i+1; j<p->total; j++)
+		for (int j=i+1; j<p->total; j++)
 		{
 			RTREEMBR one_rect;
 			one_rect = RTreeCombineRect(&BranchBuf[i].mbr, &BranchBuf[j].mbr);
@@ -165,10 +163,9 @@ static void _RTreePickSeeds(RTREEPARTITION *p)
  */
 static void _RTreeLoadNodes(RTREENODE *n, RTREENODE *q, RTREEPARTITION *p)
 {
-	int i;
 	assert(n && q && p);
 
-	for (i=0; i<p->total; i++)
+	for (int i=0; i<p->total; i++)
 	{
 		assert(p->partition[i] == 0 || p->partition[i] == 1);
 		if (p->partition[i] == 0)
@@ -183,7 +180,6 @@ static void _RTreeLoadNodes(RTREENODE *n, RTREENODE *q, RTREEPARTITION *p)
  */
 static void _RTreeInitPart(RTREEPARTITION *p, int maxrects, int minfill)
 {
-	int i;
 	assert(p);
 
 	p->count[0] = p->count[1] = 0;
@@ -191,7 +187,7 @@ static void _RTreeInitPart(RTREEPARTITION *p, int maxrects, int minfill)
 	p->area[0] = p->area[1] = (REALTYPE)0;
 	p->total = maxrects;
 	p->minfill = minfill;
-	for (i=0; i<maxrects; i++)
+	for (int i=0; i<maxrects; i++)
 	{
 		p->taken[i] = FALSE;
 		p->partition[i] = -1;
@@ -204,16 +200,15 @@ static void _RTreeInitPart(RTREEPARTITION *p, int maxrects, int minfill)
  */
 static void _RTreePrintPart(RTREEPARTITION *p)
 {
-	int i;
 	assert(p);
 
 	fprintf (stdout, " partition: ");
-	for (i=0; i<p->total; i++)
+	for (int i=0; i<p->total; i++)
 	{
 		fprintf (stdout, "%3d ", i);
 	}
 	fprintf (stdout, " ");
-	for (i=0; i<p->total; i++)
+	for (int i=0; i<p->total; i++)
 	{
 		if (p->taken[i])
 			fprintf (stdout, "  t ");
@@ -221,7 +216,7 @@ static void _RTreePrintPart(RTREEPARTITION *p)
 			fprintf (stdout, " ");
 	}
 	fprintf (stdout, " ");
-	for (i=0; i<p->total; i++)
+	for (int i=0; i<p->total; i++)
 	{
 		fprintf (stdout, "%3d ", p->partition[i]);
 	}
@@ -257,7 +252,6 @@ static void _RTreePrintPart(RTREEPARTITION *p)
  */
 static void _RTreeMethodZero(RTREEPARTITION *p, int minfill)
 {
-	int i;
 	REALTYPE biggestDiff;
 	int group, chosen=0, betterGroup=0;
 	assert(p);
@@ -270,7 +264,7 @@ static void _RTreeMethodZero(RTREEPARTITION *p, int minfill)
 	       p->count[1] < p->total - p->minfill)
 	{
 		biggestDiff = (REALTYPE)-1.;
-		for (i=0; i<p->total; i++)
+		for (int i=0; i<p->total; i++)
 		{
 			if (!p->taken[i])
 			{
@@ -314,7 +308,7 @@ static void _RTreeMethodZero(RTREEPARTITION *p, int minfill)
 		else
 			group = 0;
 
-		for (i=0; i<p->total; i++)
+		for (int i=0; i<p->total; i++)
 		{
 			if (!p->taken[i])
 				_RTreeClassify(i, group, p);
@@ -354,7 +348,6 @@ static void _RTreePrintBranch(RTREEBRANCH *br, int depth)
  */
 static int _RTreeInsertRect(RTREEMBR *rc, long long tid,  RTREENODE *node, RTREENODE **new_node, int height)
 {
-	int i;
 	RTREEBRANCH b;
 	RTREENODE *n2;
 
@@ -364,7 +357,7 @@ static int _RTreeInsertRect(RTREEMBR *rc, long long tid,  RTREENODE *node, RTREE
 	/* Still above height for insertion, go down tree recursively */
 	if (node->height > height)
 	{
-		i = RTreePickBranch(rc, node);
+		int i = RTreePickBranch(rc, node);
 		if (!_RTreeInsertRect(rc, tid, node->branch[i].child, &n2, height))
 		{
 			/* child was not split */
@@ -432,15 +425,13 @@ static void _RTreeReInsert(RTREENODE *node, RTREELISTNODE **ne)
  */
 static int _RTreeDeleteRect(RTREEMBR *rc, long long tid, RTREENODE *node, RTREELISTNODE **ee)
 {
-	int i;
-
 	assert(rc && node && ee);
 	assert(tid >= 0);
 	assert(node->height >= 0);
 
 	if (node->height > 0)  /* not a leaf node */
 	{
-		for (i = 0; i < NODECARD; i++)
+		for (int i = 0; i < NODECARD; i++)
 		{
 			if (node->branch[i].child && RTreeOverlap( rc, &(node->branch[i].mbr )))
 			{
@@ -464,7 +455,7 @@ static int _RTreeDeleteRect(RTREEMBR *rc, long long tid, RTREENODE *node, RTREEL
 #pragma warning( disable : 4312 )
 
 	/* a leaf node */
-	for (i = 0; i < LEAFCARD; i++)
+	for (int i = 0; i < LEAFCARD; i++)
 	{
 		if ( node->branch[i].child && node->branch[i].child == (RTREENODE *) tid )
 		{
@@ -480,8 +471,7 @@ static int _RTreeDeleteRect(RTREEMBR *rc, long long tid, RTREENODE *node, RTREEL
 
 static void _RTreeTabIn(int depth)
 {
-	int i;
-	for(i=0; i<depth; i++)
+	for(int i=0; i<depth; i++)
 		putchar(' ');
 }
 
@@ -511,8 +501,7 @@ int RTreeGetLeafMax(void)
  */
 void RTreeInitRect(RTREEMBR *rc)
 {
-	int i;
-	for (i=0; i<SIDES_NUMB; i++)
+	for (int i=0; i<SIDES_NUMB; i++)
 		rc->bound[i] = (REALTYPE) 0;
 }
 
@@ -524,11 +513,10 @@ void RTreeInitRect(RTREEMBR *rc)
 RTREEMBR RTreeNullRect(void)
 {
 	RTREEMBR rc;
-	int i;
 
 	rc.bound[0] = (REALTYPE) 1;
 	rc.bound[DIMS_NUMB] = (REALTYPE)-1;
-	for (i=1; i<DIMS_NUMB; i++)
+	for (int i=1; i<DIMS_NUMB; i++)
 		rc.bound[i] = rc.bound[i+DIMS_NUMB] = (REALTYPE) 0;
 	return rc;
 }
@@ -538,11 +526,9 @@ RTREEMBR RTreeNullRect(void)
  */
 void RTreePrintRect(RTREEMBR *rc, int depth)
 {
-	int i;
-
 	_RTreeTabIn(depth);
 	fprintf (stdout, "mbr: ");
-	for (i = 0; i < DIMS_NUMB; i++)
+	for (int i = 0; i < DIMS_NUMB; i++)
 	{
 		_RTreeTabIn(depth+1);
 		fprintf (stdout, "%f %f ", rc->bound[i], rc->bound[i + DIMS_NUMB]);
@@ -566,13 +552,12 @@ REALTYPE RTreeRectArea(RTREEMBR *rc )
  */
 REALTYPE RTreeRectVolume(RTREEMBR *rc )
 {
-	int i;
 	REALTYPE vol = (REALTYPE) 1;
 
 	if (INVALID_RECT(rc))
 		return (REALTYPE) 0;
 
-	for(i=0; i<DIMS_NUMB; i++)
+	for(int i=0; i<DIMS_NUMB; i++)
 		vol *= (rc->bound[i+DIMS_NUMB] - rc->bound[i]);
 	assert(vol >= 0.0);
 	return vol;
@@ -619,13 +604,12 @@ const double UnitSphereVolumes[] =
  */
 REALTYPE RTreeRectSphericalVolume(RTREEMBR *rc)
 {
-	int i;
 	double sum_of_squares=0, radius;
 
 	if (INVALID_RECT(rc))
 		return (REALTYPE) 0;
 
-	for (i=0; i<DIMS_NUMB; i++)
+	for (int i=0; i<DIMS_NUMB; i++)
 	{
 		double half_extent = (rc->bound[i+DIMS_NUMB] - rc->bound[i]) / 2;
 		sum_of_squares += half_extent * half_extent;
@@ -640,16 +624,15 @@ REALTYPE RTreeRectSphericalVolume(RTREEMBR *rc)
  */
 REALTYPE RTreeRectSurfaceArea(RTREEMBR *rc)
 {
-	int i, j;
 	REALTYPE sum = (REALTYPE) 0;
 
 	if (INVALID_RECT(rc))
 		return (REALTYPE) 0;
 
-	for (i=0; i<DIMS_NUMB; i++)
+	for (int i=0; i<DIMS_NUMB; i++)
 	{
 		REALTYPE face_area = (REALTYPE)1;
-		for (j=0; j<DIMS_NUMB; j++)
+		for (int j=0; j<DIMS_NUMB; j++)
 			/* exclude i extent from product in this dimension */
 			if(i != j)
 			{
@@ -668,7 +651,6 @@ REALTYPE RTreeRectSurfaceArea(RTREEMBR *rc)
  */
 RTREEMBR RTreeCombineRect(RTREEMBR *rc1, RTREEMBR *rc2)
 {
-	int i, j;
 	RTREEMBR new_rect;
 
 	assert(rc1 && rc2);
@@ -679,7 +661,7 @@ RTREEMBR RTreeCombineRect(RTREEMBR *rc1, RTREEMBR *rc2)
 	if (INVALID_RECT(rc2))
 		return *rc1;
 
-	for (i = 0; i < DIMS_NUMB; i++)
+	for (int i = 0, j=0; i < DIMS_NUMB; i++)
 	{
 		new_rect.bound[i] = MIN(rc1->bound[i], rc2->bound[i]);
 		j = i + DIMS_NUMB;
@@ -694,10 +676,9 @@ RTREEMBR RTreeCombineRect(RTREEMBR *rc1, RTREEMBR *rc2)
  */
 int RTreeOverlap(RTREEMBR *rc1, RTREEMBR *rc2)
 {
-	int i, j;
 	assert(rc1 && rc2);
 
-	for (i=0; i<DIMS_NUMB; i++)
+	for (int i=0, j=0; i<DIMS_NUMB; i++)
 	{
 		j = i + DIMS_NUMB;  /* index for high sides */
 
@@ -713,7 +694,7 @@ int RTreeOverlap(RTREEMBR *rc1, RTREEMBR *rc2)
  */
 int RTreeContained(RTREEMBR *r, RTREEMBR *s)
 {
-	int i, j, result;
+	int result;
 	assert(r && s);
 
 	/* undefined mbr is contained in any other */
@@ -725,7 +706,7 @@ int RTreeContained(RTREEMBR *r, RTREEMBR *s)
 		return FALSE;
 
 	result = TRUE;
-	for (i = 0; i < DIMS_NUMB; i++)
+	for (int i = 0, j=0; i < DIMS_NUMB; i++)
 	{
 		j = i + DIMS_NUMB;  /* index for high sides */
 		result = result && r->bound[i] >= s->bound[i] && r->bound[j] <= s->bound[j];
@@ -770,10 +751,9 @@ void RTreeSplitNode(RTREENODE *node, RTREEBRANCH *br, RTREENODE **new_node)
  */
 void RTreeInitNode(RTREENODE *node)
 {
-	int i;
 	node->count = 0;
 	node->height = -1;
-	for (i = 0; i < MAXCARD; i++)
+	for (int i = 0; i < MAXCARD; i++)
 		_RTreeInitBranch(&(node->branch[i]));
 }
 
@@ -800,7 +780,6 @@ void RTreeFreeNode(RTREENODE *node)
  */
 void RTreePrintNode(RTREENODE *node, int depth)
 {
-	int i;
 	assert(node);
 
 	_RTreeTabIn(depth);
@@ -818,7 +797,7 @@ void RTreePrintNode(RTREENODE *node, int depth)
 	fprintf (stdout, "  height=%d  count=%d  address=%o \n", node->height, node->count, (unsigned long long) node);
 #pragma warning(pop)
 
-	for (i=0; i<node->count; i++)
+	for (int i=0; i<node->count; i++)
 	{
 		if(node->height == 0)
 		{
@@ -839,13 +818,13 @@ void RTreePrintNode(RTREENODE *node, int depth)
  */
 RTREEMBR RTreeNodeCover(RTREENODE *node)
 {
-	int i, first_time=1;
+	int first_time=1;
 	RTREEMBR rc;
 	assert(node);
 
 	RTreeInitRect(&rc);
 
-	for (i = 0; i < MAXKIDS(node); i++)
+	for (int i = 0; i < MAXKIDS(node); i++)
 	{
 		if (node->branch[i].child)
 		{
@@ -871,13 +850,13 @@ RTREEMBR RTreeNodeCover(RTREENODE *node)
 int RTreePickBranch(RTREEMBR *rc, RTREENODE *node)
 {
 	RTREEMBR *r;
-	int i, first_time = 1;
+	int first_time = 1;
 	REALTYPE increase, bestIncr=(REALTYPE)-1, area, bestArea=0;
 	int best=0;
 	RTREEMBR tmp_rect;
 	assert(rc && node);
 
-	for (i=0; i<MAXKIDS(node); i++)
+	for (int i=0; i<MAXKIDS(node); i++)
 	{
 		if (node->branch[i].child)
 		{
@@ -911,12 +890,11 @@ int RTreePickBranch(RTREEMBR *rc, RTREENODE *node)
  */
 int RTreeAddBranch(RTREEBRANCH *br, RTREENODE *node, RTREENODE **new_node)
 {
-	int i;
 	assert(br && node);
 
 	if (node->count < MAXKIDS(node))  /* split won't be necessary */
 	{
-		for (i = 0; i < MAXKIDS(node); i++)  /* find empty branch */
+		for (int i = 0; i < MAXKIDS(node); i++)  /* find empty branch */
 		{
 			if (node->branch[i].child == NULL)
 			{
@@ -952,12 +930,10 @@ void RTreeDisconnectBranch(RTREENODE *node, int i)
  */
 void RTreeDestroyNode (RTREENODE *node)
 {
-	int i;
-
 	if (node->height > 0)
 	{
 		/* it is not leaf -> destroy childs */
-		for ( i = 0; i < NODECARD; i++)
+		for (int i = 0; i < NODECARD; i++)
 		{
 			if ( node->branch[i].child )
 				RTreeDestroyNode ( node->branch[i].child );
@@ -995,14 +971,13 @@ int RTreeSearch(RTREENODE *node, RTREEMBR *rc, pfnSearchHitCallback pfnSHCB, voi
 {
 	/* Fix not yet tested. */
 	int hitCount = 0;
-	int i;
 
 	assert(node && rc);
 	assert(node->height >= 0);
 
 	if (node->height > 0) /* this is an internal node in the tree */
 	{
-		for (i=0; i<NODECARD; i++)
+		for (int i=0; i<NODECARD; i++)
 		{
 			if (node->branch[i].child && RTreeOverlap/*RTreeContained*/(rc, &node->branch[i].mbr))
 				hitCount += RTreeSearch(node->branch[i].child, rc, pfnSHCB, pfnParam);
@@ -1012,7 +987,7 @@ int RTreeSearch(RTREENODE *node, RTREEMBR *rc, pfnSearchHitCallback pfnSHCB, voi
 	{
 #pragma warning(push)    /* C4311 */
 #pragma warning( disable : 4311 )
-		for (i=0; i<LEAFCARD; i++)
+		for (int i=0; i<LEAFCARD; i++)
 		{
 			if (node->branch[i].child && RTreeOverlap/*RTreeContained*/(rc, &node->branch[i].mbr))
 			{
@@ -1039,10 +1014,6 @@ int RTreeSearch(RTREENODE *node, RTREEMBR *rc, pfnSearchHitCallback pfnSHCB, voi
  */
 int RTreeInsertRect(RTREEMBR *rc, int tid, RTREENODE **root, int height)
 {
-#ifdef _DEBUG
-	int i;
-#endif
-
 	RTREENODE    *newroot;
 	RTREENODE    *newnode;
 	RTREEBRANCH b;
@@ -1051,7 +1022,7 @@ int RTreeInsertRect(RTREEMBR *rc, int tid, RTREENODE **root, int height)
 	assert(height >= 0 && height <= (*root)->height);
 
 #ifdef _DEBUG
-	for (i=0; i<DIMS_NUMB; i++)
+	for (int i=0; i<DIMS_NUMB; i++)
 		assert(rc->bound[i] <= rc->bound[DIMS_NUMB+i]);
 #endif
 
@@ -1083,7 +1054,6 @@ int RTreeInsertRect(RTREEMBR *rc, int tid, RTREENODE **root, int height)
  */
 int RTreeDeleteRect(RTREEMBR *rc, int tid, RTREENODE **root)
 {
-	int        i;
 	RTREENODE        *tmp_nptr = NULL;
 	RTREELISTNODE    *reInsertList = NULL;
 	RTREELISTNODE    *e;
@@ -1103,7 +1073,7 @@ int RTreeDeleteRect(RTREEMBR *rc, int tid, RTREENODE **root)
 
 #pragma warning(push)    /* C4311 */
 #pragma warning( disable : 4311 )
-			for (i = 0; i < MAXKIDS(tmp_nptr); i++)
+			for (int i = 0; i < MAXKIDS(tmp_nptr); i++)
 			{
 				if (tmp_nptr->branch[i].child)
 				{
@@ -1121,7 +1091,7 @@ int RTreeDeleteRect(RTREEMBR *rc, int tid, RTREENODE **root)
 		/* check for redundant root (not leaf, 1 child) and eliminate */
 		if ((*root)->count == 1 && (*root)->height > 0)
 		{
-			for (i = 0; i < NODECARD; i++)
+			for (int i = 0; i < NODECARD; i++)
 			{
 				tmp_nptr = (*root)->branch[i].child;
 				if(tmp_nptr)
@@ -1157,14 +1127,13 @@ REALTYPE RTreeOverlapArea(RTREEMBR *r, RTREEMBR *s)
 REALTYPE RTreeCalculateArea(RTREENODE *node, RTREEMBR *rc)
 {
 	REALTYPE area = 0;
-	int i;
 
 	assert(node && rc);
 	assert(node->height >= 0);
 
 	if (node->height > 0) /* this is an internal node in the tree */
 	{
-		for (i=0; i<NODECARD; i++)
+		for (int i=0; i<NODECARD; i++)
 		{
 			if (node->branch[i].child && RTreeOverlap(rc, &node->branch[i].mbr))
 				area += RTreeCalculateArea(node->branch[i].child, rc);  //recursive
@@ -1172,7 +1141,7 @@ REALTYPE RTreeCalculateArea(RTREENODE *node, RTREEMBR *rc)
 	}
 	else /* this is a leaf node */
 	{
-		for (i=0; i<LEAFCARD; i++)
+		for (int i=0; i<LEAFCARD; i++)
 		{
 			if (node->branch[i].child && RTreeContained(&node->branch[i].mbr, rc))
 				area += RTreeRectArea(&node->branch[i].mbr);
@@ -1191,10 +1160,9 @@ REALTYPE RTreeSearchDensity(RTREENODE *node, RTREEMBR *rc)
 
 int RTREESearchLeafmbr(RTREENODE *node, long long id, RTREEMBR *mbr)
 {
-	int i;
 	if (node->height > 0) /* this is an internal node in the tree */
 	{
-		for (i=0; i<NODECARD; i++)
+		for (int i=0; i<NODECARD; i++)
 		{
 			if (node->branch[i].child)
 				if(RTREESearchLeafmbr(node->branch[i].child, id, mbr))
@@ -1203,7 +1171,7 @@ int RTREESearchLeafmbr(RTREENODE *node, long long id, RTREEMBR *mbr)
 	}
 	else /* this is a leaf node */
 	{
-		for (i=0; i<LEAFCARD; i++)
+		for (int i=0; i<LEAFCARD; i++)
 		{
 			if (node->branch[i].child == (RTREENODE *)id)
 			{
@@ -1219,11 +1187,9 @@ int RTREESearchLeafmbr(RTREENODE *node, long long id, RTREEMBR *mbr)
 
 int PrintAllTheLeaves(RTREENODE *node)
 {
-
-	int i;
 	if (node->height > 0) /* this is an internal node in the tree */
 	{
-		for (i=0; i<NODECARD; i++)
+		for (int i=0; i<NODECARD; i++)
 		{
 			if (node->branch[i].child)
 				PrintAllTheLeaves(node->branch[i].child);
@@ -1231,7 +1197,7 @@ int PrintAllTheLeaves(RTREENODE *node)
 	}
 	else /* this is a leaf node */
 	{
-		for (i=0; i<LEAFCARD; i++)
+		for (int i=0; i<LEAFCARD; i++)
 		{
 			if (node->branch[i].child)
 				printf("%d\t", node->branch[i].child);
@@ -1242,14 +1208,12 @@ int PrintAllTheLeaves(RTREENODE *node)
 //Search if any leaf under the node overlaps the rectangle
 int RTreeLeafOverlap(RTREENODE *node, RTREEMBR *rc)
 {
-	int i;
-
 	assert(node && rc);
 	assert(node->height >= 0);
 
 	if (node->height > 0) /* this is an internal node in the tree */
 	{
-		for (i=0; i<NODECARD; i++)
+		for (int i=0; i<NODECARD; i++)
 		{
 			if (node->branch[i].child && RTreeOverlap(rc, &node->branch[i].mbr))
 				if (RTreeLeafOverlap(node->branch[i].child, rc))
@@ -1260,7 +1224,7 @@ int RTreeLeafOverlap(RTREENODE *node, RTREEMBR *rc)
 	{
 #pragma warning(push)    /* C4311 */
 #pragma warning( disable : 4311 )
-		for (i=0; i<LEAFCARD; i++)
+		for (int i=0; i<LEAFCARD; i++)
 		{
 			if (node->branch[i].child && RTreeOverlap(rc, &node->branch[i].mbr))
 				return 1;
