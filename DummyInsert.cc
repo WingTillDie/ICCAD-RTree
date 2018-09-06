@@ -656,7 +656,7 @@ void rtree(char input_file_name[], char output_file_name[], critical_net *critic
 		RTreeDestroy (root_critical_expand[i]);
 	}
 
-	endding = time(NULL);
+	ending = time(NULL);
 	printf("Time = %.f\n", difftime(ending, start));
 	printf("Program completed!\n");
 }
