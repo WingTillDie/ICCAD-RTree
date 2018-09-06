@@ -42,7 +42,7 @@ typedef struct netlist
 	char *metal_type;
 	struct netlist *next;
 } net;
-net *front = NULL, *prev;
+net *front_net = NULL, *prev;
 
 void printrule();
 void read(char  file_name[]);
@@ -106,9 +106,9 @@ void read(char  file_name[])
 			temp = strtok(NULL, "\n");
 			tmp->metal_type = new char[strlen(temp) + 1];
 			strcpy(tmp -> metal_type, temp);
-			if(front == NULL)
+			if(front_net == NULL)
 			{
-				front = tmp;
+				front_net = tmp;
 				rear = tmp;
 			}
 			else
@@ -553,10 +553,10 @@ void insert_empty_window(RTREENODE **root, RTREEMBR *window, int layer, FILE *fP
 
 void rtree(char input_file_name[], char output_file_name[], critical_net *critical_net_head)
 {
-	time_t start, end;
+	time_t start, ending;
 	int i;
 	start = time(NULL);
-	front = NULL;
+	front_net = NULL;
 	fill_id = 0;
 	int max_critical_net = critical_net_head->id;
 	int critical_type[max_critical_net + 1];
@@ -583,7 +583,7 @@ void rtree(char input_file_name[], char output_file_name[], critical_net *critic
 	}
 
 	read(input_file_name);
-	net *point = front;
+	net *point = front_net;
 
 	printf("Finished reading\n");
 	FILE *fPtr;
@@ -656,7 +656,7 @@ void rtree(char input_file_name[], char output_file_name[], critical_net *critic
 		RTreeDestroy (root_critical_expand[i]);
 	}
 
-	end = time(NULL);
-	printf("Time = %.f\n", difftime(end, start));
+	endding = time(NULL);
+	printf("Time = %.f\n", difftime(ending, start));
 	printf("Program completed!\n");
 }
