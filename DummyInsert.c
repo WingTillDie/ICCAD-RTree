@@ -37,7 +37,7 @@ net *front = NULL, *prev;
 
 void printrule();
 void read(char  file_name[]);
-void critical_to_matrix(int max_critical_net, int critical_type[]);
+void critical_to_matrix(int max_critical_net, int critical_type[], critical_net *critical_net_head);
 void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_critical_expand);
 void printPrev(FILE *fPtr);
 void printEnd(FILE *fPtr);
@@ -112,7 +112,7 @@ void read(char  file_name[])
 	fclose(fPtr);
 }
 
-void critical_to_matrix(int max_critical_net, int critical_type[])
+void critical_to_matrix(int max_critical_net, int critical_type[], critical_net *critical_net_head)
 {
 	int i;
 	for(i=0; i<max_critical_net + 1; i++)
@@ -542,7 +542,7 @@ void insert_empty_window(RTREENODE **root, RTREEMBR *window, int layer, FILE *fP
 }
 
 
-void rtree(char input_file_name[], char output_file_name[])
+void rtree(char input_file_name[], char output_file_name[], critical_net *critical_net_head)
 {
 	time_t start, end;
 	int i;
@@ -552,7 +552,7 @@ void rtree(char input_file_name[], char output_file_name[])
 	int max_critical_net = critical_net_head->id;
 	int critical_type[max_critical_net + 1];
 
-	critical_to_matrix(max_critical_net, critical_type);
+	critical_to_matrix(max_critical_net, critical_type, critical_net_head);
 
 	printf("Input filename : %s\n", input_file_name);
 	printrule();

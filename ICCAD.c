@@ -40,7 +40,7 @@ public:
 #endif
 
 void process(char filename[]);
-void Insertion_sort(int id);
+void Insertion_sort(int id, critical_net **critical_net_head_p);
 
 int main(int argc, char **argv)
 {
@@ -87,6 +87,7 @@ void process(char filename[])
 	char output[20], rule_file[20], process_file[20];
 	char *get_first;
 	int index, i;
+	critical_net *critical_net_head = NULL;
 	if(fp==NULL)
 	{
 		fprintf(stderr, "Open config file %s failed, please ensure that the file exist.\n", filename);
@@ -153,10 +154,9 @@ void process(char filename[])
 			else if( line[1]=='o')
 				break;
 		case 'c':
-			critical_net_head = NULL;
 			while((critical = strtok(NULL, " \n")) != NULL)
 			{
-				Insertion_sort(atoi(critical));
+				Insertion_sort(atoi(critical), &critical_net_head);
 			}
 			break;
 		case 'g':
@@ -218,7 +218,7 @@ void process(char filename[])
 
 	fclose(ruleFile);
 	fclose(processFile);
-	rtree(design, output);
+	rtree(design, output, critical_net_head);
 	/*
 	fgets(line, sizeof(line), designFile);
 	printf("%s ", line);
@@ -255,27 +255,20 @@ void process(char filename[])
 	//p();
 }
 
-void Insertion_sort(int id)
+void Insertion_sort(int id, critical_net **critical_net_head_p)//TODO Using global critical_net_head bad design //Check where it's used to debug //Used in DummyInsert.c
 {
-	critical_net	*tmp;
-	tmp = (critical_net*)malloc(sizeof(critical_net));
+	critical_net *tmp = malloc(sizeof(critical_net));
 	tmp->id = id;
 	tmp->next = NULL;
-	if(critical_net_head == NULL)
-	{
-
-		critical_net_head = tmp;
-	}
-	else if(tmp->id > critical_net_head->id)
-	{
-		tmp->next = critical_net_head;
-		critical_net_head = tmp;
-	}
-	else
-	{
-		critical_net  *prev = critical_net_head;
-		critical_net  *current = critical_net_head->next;
-		while(current != NULL && current->id > tmp->id)
+	if(*critical_net_head_p == NULL){
+		*critical_net_head_p = tmp;
+	} else if(tmp->id > (*critical_net_head_p)->id){
+		tmp->next = *critical_net_head_p;
+		*critical_net_head_p = tmp;
+	} else {
+		critical_net  *prev = *critical_net_head_p;
+		critical_net  *current = (*critical_net_head_p)->next;
+		while(current != NULL && tmp->id < current->id)
 		{
 			prev = current;
 			current = current->next;
