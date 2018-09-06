@@ -255,7 +255,7 @@ void process(char filename[])
 	//p();
 }
 
-void Insertion_sort(int id, critical_net **critical_net_head_p)//TODO Using global critical_net_head bad design //Check where it's used to debug //Used in DummyInsert.c
+void Insertion_sort(int id, critical_net **critical_net_head_p)
 {
 	critical_net *tmp = malloc(sizeof(critical_net));
 	tmp->id = id;

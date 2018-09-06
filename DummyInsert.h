@@ -5,7 +5,6 @@ typedef struct critical_net
 	int  id;
 	struct critical_net *next;
 } critical_net;
-//critical_net *critical_net_head;
 double window_width;
 double min_width[20];
 double min_space[20];
