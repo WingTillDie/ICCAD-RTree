@@ -78,14 +78,14 @@ void critical_to_matrix(int critical_type[], critical_net *critical_net_head);
 void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_critical_expand);
 void printPrev(FILE *fPtr);
 void printEnd(FILE *fPtr);
-REALTYPE dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, double space, FILE *fPtr, int layer, int mode, RTREENODE **root_critical_expand, REALTYPE density_orig);
-REALTYPE pattern(RTREENODE **node, RTREEMBR *window, double space, FILE *fPtr, int layer, REALTYPE density_orig);
+REALTYPE dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, double space, FILE *fPtr, int layer, int mode, RTREENODE **root_critical_expand, REALTYPE density);
+REALTYPE pattern(RTREENODE **node, RTREEMBR *window, double space, FILE *fPtr, int layer, REALTYPE density);
 int horizontal_vertical(RTREEMBR *window, RTREENODE *root);
-REALTYPE insert_vert_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, double fill_width, int layer, FILE *fPtr, REALTYPE density_orig);
-REALTYPE insert_hori_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, double fill_width, int layer, FILE *fPtr, REALTYPE density_orig);
+REALTYPE insert_vert_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, double fill_width, int layer, FILE *fPtr, REALTYPE density);
+REALTYPE insert_hori_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, double fill_width, int layer, FILE *fPtr, REALTYPE density);
 void print_density_insufficient();
 template <typename T>
-void check_layer(RTREENODE *root, int layer, FILE *fPtr, stack<T>& stk, RTREENODE *root_critical_expand, REALTYPE density);
+void check_layer(RTREENODE *root, int layer, FILE *fPtr, stack<T>& stk, RTREENODE *root_critical_expand, REALTYPE density_orig);
 void lastcheck(RTREENODE *root, int layer, REALTYPE density);
 void print_rect(RTREEMBR *rect, int layer, FILE *fPtr);
 REALTYPE insert_empty_window(RTREENODE **root, RTREEMBR *window, int layer, FILE *fPtr, double width, REALTYPE density);
@@ -256,12 +256,11 @@ void printEnd(FILE *fPtr)
 
 //REALTYPE RTreeInsertRect_density(RTREEMBR *rc, int tid, RTREENODE **root, int height)
 
-REALTYPE dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, double space, FILE *fPtr, int layer, int mode, RTREENODE **root_critical_expand, REALTYPE density_orig)
+REALTYPE dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, double space, FILE *fPtr, int layer, int mode, RTREENODE **root_critical_expand, REALTYPE density)
 {
 	double x = window->bound[0] - space;
 	double y = window->bound[1] - space;
 	double move_space;
-    REALTYPE density=density_orig;
 	if(mode == 0)
 	{
 		if(fill_width == min_width[layer])
@@ -360,14 +359,13 @@ int horizontal_vertical(RTREEMBR *window, RTREENODE *root)
 		return 1;
 }
 
-REALTYPE insert_hori_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, double fill_width, int layer, FILE *fPtr, REALTYPE density_orig)
+REALTYPE insert_hori_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, double fill_width, int layer, FILE *fPtr, REALTYPE density)
 {
 	double x = window->bound[0] - space;
 	double y = window->bound[1] - space;
 	double y_move_space = 1.;
 	double x_move_space = 10.;
 	double length = 0.;
-	REALTYPE density=density_orig;
 	while(y + 2 * space + fill_width <= window->bound[3])
 	{
 		int insert_flag = 0;
