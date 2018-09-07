@@ -85,10 +85,10 @@ REALTYPE insert_vert_rect_dummy(RTREENODE *root, RTREEMBR *window, double space,
 REALTYPE insert_hori_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, double fill_width, int layer, FILE *fPtr, REALTYPE density_orig);
 void print_density_insufficient();
 template <typename T>
-REALTYPE check_layer(RTREENODE *root, int layer, FILE *fPtr, stack<T>& stk, RTREENODE *root_critical_expand, REALTYPE density);
+void check_layer(RTREENODE *root, int layer, FILE *fPtr, stack<T>& stk, RTREENODE *root_critical_expand, REALTYPE density);
 void lastcheck(RTREENODE *root, int layer, REALTYPE density);
 void print_rect(RTREEMBR *rect, int layer, FILE *fPtr);
-void insert_empty_window(RTREENODE **root, RTREEMBR *window, int layer, FILE *fPtr, double width);
+REALTYPE insert_empty_window(RTREENODE **root, RTREEMBR *window, int layer, FILE *fPtr, double width, REALTYPE density);
 
 void printrule()
 {
@@ -185,7 +185,7 @@ void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_
 #endif
 			double fill_width = max_fill_width[layer];
 			if((density = RTreeSearchDensity(root, &window_rect)) == 0)
-				insert_empty_window(&root, &window_rect, layer, fPtr, window_width / 2.);
+				density = insert_empty_window(&root, &window_rect, layer, fPtr, window_width / 2., density);
 			else if(density < min_density[layer]) do {
                 density = dummymetalinsert(&root, &window_rect, fill_width, min_space[layer], fPtr, layer, 0, &root_critical_expand, density);
                 fill_width = ceil(fill_width * exp(alpha));
@@ -304,6 +304,7 @@ REALTYPE dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width,
 		y = y + move_space;
 		x = window->bound[0] - space;
 	}
+	return density;
 }
 
 REALTYPE pattern(RTREENODE **node, RTREEMBR *window, double space, FILE *fPtr, int layer, REALTYPE density_orig)
@@ -617,6 +618,7 @@ REALTYPE insert_empty_window(RTREENODE **root, RTREEMBR *window, int layer, FILE
 		if(density < min_density[layer])
 			printf("**************failed**************\n");
 	}
+	return density;
 }
 
 
