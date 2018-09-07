@@ -184,12 +184,17 @@ void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_
 #endif
 			double fill_width = max_fill_width[layer];
 			REALTYPE density;
-			if(RTreeSearchDensity(root, &window_rect) == 0)
+			if((density = RTreeSearchDensity(root, &window_rect)) == 0)
 				insert_empty_window(&root, &window_rect, layer, fPtr, window_width / 2.);
-			else while((density = RTreeSearchDensity(root, &window_rect)) < min_density[layer] && fill_width >= min_width[layer]) {
+			else if(density < min_density[layer]) do{
                 dummymetalinsert(&root, &window_rect, fill_width, min_space[layer], fPtr, layer, 0, &root_critical_expand);
                 fill_width = ceil(fill_width * exp(alpha));
-            }
+			} while((density = RTreeSearchDensity(root, &window_rect)) < min_density[layer] && fill_width >= min_width[layer]);
+			/*
+            while((density = RTreeSearchDensity(root, &window_rect)) < min_density[layer] && fill_width >= min_width[layer]) {
+                dummymetalinsert(&root, &window_rect, fill_width, min_space[layer], fPtr, layer, 0, &root_critical_expand);
+                fill_width = ceil(fill_width * exp(alpha));
+            }*/
 			if(density < min_density[layer])
 			{
 				fill_width = min_width[layer];
