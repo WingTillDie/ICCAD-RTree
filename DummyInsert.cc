@@ -27,7 +27,7 @@ extern int total_layer;
 typedef struct DRC_ERROR
 {
 	RTREEMBR error_rect;
-	struct DRC_ERROR *next;
+	struct DRC_ERROR *next = NULL;
 } DRC_ERROR;
 
 typedef struct netlist
@@ -40,12 +40,12 @@ typedef struct netlist
 	int net;
 	int layer_num;
 	char *metal_type;
-	struct netlist *next;
+	struct netlist *next = NULL;
 } net;
 
 void printrule();
 net* read(char  file_name[]);
-void critical_to_matrix(int max_critical_net, int critical_type[], critical_net *critical_net_head);
+void critical_to_matrix(int critical_type[], critical_net *critical_net_head);
 void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_critical_expand);
 void printPrev(FILE *fPtr);
 void printEnd(FILE *fPtr);
@@ -70,10 +70,8 @@ void printrule()
 
 net* read(char  file_name[])
 {
-	net *tmp, *rear=NULL;
 	char buffer[256];
 	const char *delim = " ";
-	char *temp;
 	net *front_net = NULL;
 	FILE *fPtr = fopen(file_name, "r");     /* open file pointer */
 	if(fPtr) // if file exist...
@@ -92,8 +90,7 @@ net* read(char  file_name[])
 #endif
 		while(fgets(buffer, 256, fPtr)!=NULL)
 		{
-			tmp = new net;
-			tmp->next = NULL;
+			net *tmp = new net;
 			tmp->num = atof(strtok(buffer, delim));
 			tmp->xmin = atof(strtok(NULL, delim));
 			tmp->ymin = atof((strtok(NULL, delim)));
@@ -101,9 +98,10 @@ net* read(char  file_name[])
 			tmp->ymax = atof((strtok(NULL, delim)));
 			tmp->net = atoi((strtok(NULL, delim)));
 			tmp->layer_num = atoi((strtok(NULL, delim)));
-			temp = strtok(NULL, "\n");
+			char *temp = strtok(NULL, "\n");
 			tmp->metal_type = new char[strlen(temp) + 1];
 			strcpy(tmp -> metal_type, temp);
+			net *rear;
 			if(front_net == NULL)
 			{
 				front_net = tmp;
@@ -120,15 +118,13 @@ net* read(char  file_name[])
 	return front_net;
 }
 
-void critical_to_matrix(int max_critical_net, int critical_type[], critical_net *critical_net_head)
+void critical_to_matrix(int critical_type[], critical_net *critical_net_head)
 {
-	for(int i=0; i<max_critical_net + 1; i++)
-		critical_type[i] = 0;
-	critical_net *ptr = critical_net_head, *prev;
+	critical_net *ptr = critical_net_head;
 	while(ptr != NULL)
 	{
 		critical_type[ptr->id] = 1;
-		prev = ptr;
+		critical_net *prev = ptr;
 		ptr = ptr->next;
 		delete prev;
 	}
@@ -162,7 +158,6 @@ void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_
 				{
 					tmp = new DRC_ERROR;
 					tmp->error_rect = window_rect;
-					tmp->next = NULL;
 					if(head == NULL)
 					{
 						head = tmp;
@@ -551,11 +546,11 @@ void insert_empty_window(RTREENODE **root, RTREEMBR *window, int layer, FILE *fP
 
 void rtree(char input_file_name[], char output_file_name[], critical_net *critical_net_head)
 {
-	time_t start=time(NULL), ending;
+	time_t start=time(NULL);
 	int max_critical_net = critical_net_head->id;
-	int critical_type[max_critical_net + 1];
+	int critical_type[max_critical_net + 1] = {};
 
-	critical_to_matrix(max_critical_net, critical_type, critical_net_head);
+	critical_to_matrix(critical_type, critical_net_head);
 
 	printf("Input filename : %s\n", input_file_name);
 	printrule();
@@ -579,8 +574,7 @@ void rtree(char input_file_name[], char output_file_name[], critical_net *critic
 	net *point = read(input_file_name);
 
 	printf("Finished reading\n");
-	FILE *fPtr;
-	fPtr = fopen(output_file_name,"w");
+	FILE *fPtr = fopen(output_file_name,"w");
 
 #ifdef svg
 	printPrev(fPtr);
@@ -593,15 +587,25 @@ void rtree(char input_file_name[], char output_file_name[], critical_net *critic
 #ifdef design_transform
 		RTREEMBR test_rects = {{point->ymin, point->xmin, point->ymax, point->xmax}};
 #else
-		RTREEMBR test_rects = {{point->xmin, point->ymin, point->xmax, point->ymax}};
+		RTREEMBR test_rects = {
+		    point->xmin,
+		    point->ymin,
+		    point->xmax,
+		    point->ymax
+        };
 #endif
 
 		RTreeInsertRect(&test_rects, point->num, &root[point->layer_num - 1], 0);
 		fill_id++;
 
-		if(point->net < max_critical_net && critical_type[point->net])
+		if(point->net <= max_critical_net && critical_type[point->net])
 		{
-			RTREEMBR critical_expand_rects = {{point->xmin - critical_expand_factor * min_space[point->layer_num - 1], point->ymin - critical_expand_factor * min_space[point->layer_num - 1], point->xmax + critical_expand_factor * min_space[point->layer_num - 1], point->ymax + critical_expand_factor * min_space[point->layer_num - 1]}};
+			RTREEMBR critical_expand_rects = {
+                point->xmin - critical_expand_factor * min_space[point->layer_num - 1],
+                point->ymin - critical_expand_factor * min_space[point->layer_num - 1],
+                point->xmax + critical_expand_factor * min_space[point->layer_num - 1],
+                point->ymax + critical_expand_factor * min_space[point->layer_num - 1]
+            };
 			RTreeInsertRect(&critical_expand_rects, point->num, &root_critical_expand[point->layer_num - 1], 0);
 #ifdef svg
 			if(point->layer_num == svglayer)
@@ -648,7 +652,6 @@ void rtree(char input_file_name[], char output_file_name[], critical_net *critic
 		RTreeDestroy (root_critical_expand[i]);
 	}
 
-	ending = time(NULL);
-	printf("Time = %.f\n", difftime(ending, start));
+	printf("Time = %.f\n", difftime(time(NULL), start));
 	printf("Program completed!\n");
 }
