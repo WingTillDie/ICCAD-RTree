@@ -437,8 +437,7 @@ REALTYPE insert_vert_rect_dummy(RTREENODE *root, RTREEMBR *window, double space,
 						RTREEMBR inner_rect = {{outer_rect.bound[0] + space, outer_rect.bound[1] + space, outer_rect.bound[2] - space, outer_rect.bound[3] - space}};
 						if((temp_rect.bound[3] - space > chip_boundary.bound[3]))
 							inner_rect.bound[3] = chip_boundary.bound[3];
-						RTreeInsertRect(&inner_rect, ++fill_id, &root, 0);
-						density+=RTreeRectArea(&inner_rect)/RTreeRectArea(window);
+						density = RTreeInsertRect_density(&inner_rect, ++fill_id, &root, 0, window, density);
 #ifdef svg
 						fprintf(fPtr, "<rect width=\"%f\" height=\"%f\" x=\"%f\" y=\"%f\" style=\"fill:#d3bc5f;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1\"/>\n", inner_rect.bound[2] - inner_rect.bound[0], inner_rect.bound[3] - inner_rect.bound[1], inner_rect.bound[0] - chip_boundary.bound[0], chip_boundary.bound[3] - inner_rect.bound[3]);
 #else
@@ -598,20 +597,16 @@ REALTYPE insert_empty_window(RTREENODE **root, RTREEMBR *window, int layer, FILE
 		RTREEMBR left_up = {{x1 - half_width, y2 - half_width, x1 + half_width, y2 + half_width}};
 		RTREEMBR right_down = {{x2 - half_width, y1 - half_width, x2 + half_width, y1 + half_width}};
 		RTREEMBR right_up = {{x2 - half_width, y2 - half_width, x2 + half_width, y2 + half_width}};
-		RTreeInsertRect(&left_down, ++fill_id, root, 0);
-		density+=RTreeRectArea(&left_down)/RTreeRectArea(window);
+		density = RTreeInsertRect_density(&left_down, ++fill_id, root, 0, window, density);
 		print_rect(&left_down, layer, fPtr);
 
-		RTreeInsertRect(&left_up, ++fill_id, root, 0);
-		density+=RTreeRectArea(&left_up)/RTreeRectArea(window);
+		density = RTreeInsertRect_density(&left_up, ++fill_id, root, 0, window, density);
 		print_rect(&left_up, layer, fPtr);
 
-		RTreeInsertRect(&right_down, ++fill_id, root, 0);
-		density+=RTreeRectArea(&right_down)/RTreeRectArea(window);
+		density = RTreeInsertRect_density(&right_down, ++fill_id, root, 0, window, density);
 		print_rect(&right_down, layer, fPtr);
 
-		RTreeInsertRect(&right_up, ++fill_id, root, 0);
-		density+=RTreeRectArea(&right_up)/RTreeRectArea(window);
+		density = RTreeInsertRect_density(&right_up, ++fill_id, root, 0, window, density);
 		print_rect(&right_up, layer, fPtr);
 		if(density < min_density[layer])
 			printf("**************failed**************\n");
