@@ -139,8 +139,8 @@ void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_
 	RTREEMBR window_rect = {
 	    chip_boundary.bound[0],
 	    chip_boundary.bound[1],
-	    chip_boundary.bound[0] + window_width / 2.0,
-	    chip_boundary.bound[1] + window_width / 2.0
+	    chip_boundary.bound[0] + window_width / 2.,
+	    chip_boundary.bound[1] + window_width / 2.
     };
 
 	while(window_rect.bound[3] <= chip_boundary.bound[3])
@@ -153,12 +153,10 @@ void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_
 			double fill_width = max_fill_width[layer];
 			if(RTreeSearchDensity(root, &window_rect) == 0)
 				insert_empty_window(&root, &window_rect, layer, fPtr, window_width / 2.0);
-			else
-				while(RTreeSearchDensity(root, &window_rect) <= min_density[layer] && fill_width >= min_width[layer])
-				{
+			else while(RTreeSearchDensity(root, &window_rect) <= min_density[layer] && fill_width >= min_width[layer]) {
 					dummymetalinsert(&root, &window_rect, fill_width, min_space[layer], fPtr, layer, 0, &root_critical_expand);
 					fill_width = ceil(fill_width * exp(alpha));
-				}
+            }
 			if(RTreeSearchDensity(root, &window_rect) < min_density[layer])
 			{
 				fill_width = min_width[layer];
@@ -171,9 +169,7 @@ void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_
 					{
 						head = tmp;
 						tail = tmp;
-					}
-					else
-					{
+					} else {
 						tail->next = tmp;
 						tail = tmp;
 					}

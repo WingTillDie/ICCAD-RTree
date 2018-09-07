@@ -61,9 +61,9 @@ int main(int argc, char **argv)
 	*/
 	#ifndef runall
 		if(argc==2)
-		process(argv[1]);
+            process(argv[1]);
 		else
-		printf("USAGE: ./cada025 <config filename>\ne.g. ./cada025 circuit1.conf\n");
+            printf("USAGE: ./cada025 <config filename>\ne.g. ./cada025 circuit1.conf\n");
 
 	#else
 	printf("Warning!!! Run all mode");
