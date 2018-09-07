@@ -83,7 +83,6 @@ void pattern(RTREENODE **node, RTREEMBR *window, double space, FILE *fPtr, int l
 int horizontal_vertical(RTREEMBR *window, RTREENODE *root);
 void insert_hori_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, double fill_width, int layer, FILE *fPtr);
 void insert_vert_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, double fill_width, int layer, FILE *fPtr);
-void print_density_insufficient();
 template <typename T>
 void check_layer(RTREENODE *root, int layer, FILE *fPtr, stack<T>& stk, RTREENODE *root_critical_expand);
 void lastcheck(RTREENODE *root, int layer);
