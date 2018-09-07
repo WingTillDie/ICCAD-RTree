@@ -183,13 +183,14 @@ void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_
 			fprintf(fPtr, "<rect width=\"%f\" height=\"%f\" x=\"%f\" y=\"%f\" style=\"fill:none;stroke:#000000;stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1;opacity:1;stroke-opacity:1\"/>\n", window_rect.bound[2] - window_rect.bound[0], window_rect.bound[3] - window_rect.bound[1], window_rect.bound[0] - chip_boundary.bound[0], chip_boundary.bound[3] - window_rect.bound[3]);
 #endif
 			double fill_width = max_fill_width[layer];
+			REALTYPE density;
 			if(RTreeSearchDensity(root, &window_rect) == 0)
 				insert_empty_window(&root, &window_rect, layer, fPtr, window_width / 2.);
-			else while(RTreeSearchDensity(root, &window_rect) <= min_density[layer] && fill_width >= min_width[layer]) {
+			else while((density = RTreeSearchDensity(root, &window_rect)) < min_density[layer] && fill_width >= min_width[layer]) {
                 dummymetalinsert(&root, &window_rect, fill_width, min_space[layer], fPtr, layer, 0, &root_critical_expand);
                 fill_width = ceil(fill_width * exp(alpha));
             }
-			if(RTreeSearchDensity(root, &window_rect) < min_density[layer])
+			if(density < min_density[layer])
 			{
 				fill_width = min_width[layer];
 				dummymetalinsert(&root, &window_rect, fill_width, min_space[layer], fPtr, layer, 0,  &root_critical_expand);
