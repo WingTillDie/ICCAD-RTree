@@ -78,7 +78,7 @@ void critical_to_matrix(int critical_type[], critical_net *critical_net_head);
 void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_critical_expand);
 void printPrev(FILE *fPtr);
 void printEnd(FILE *fPtr);
-REALTYPE dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, double space, FILE *fPtr, int layer, int mode, RTREENODE **root_critical_expand);
+REALTYPE dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, double space, FILE *fPtr, int layer, int mode, RTREENODE **root_critical_expand, REALTYPE density_orig);
 void pattern(RTREENODE **node, RTREEMBR *window, double space, FILE *fPtr, int layer);
 int horizontal_vertical(RTREEMBR *window, RTREENODE *root);
 void insert_hori_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, double fill_width, int layer, FILE *fPtr);
@@ -188,7 +188,7 @@ void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_
 			if((density = RTreeSearchDensity(root, &window_rect)) == 0)
 				insert_empty_window(&root, &window_rect, layer, fPtr, window_width / 2.);
 			else if(density < min_density[layer]) do{
-                density = dummymetalinsert(&root, &window_rect, fill_width, min_space[layer], fPtr, layer, 0, &root_critical_expand);
+                density = dummymetalinsert(&root, &window_rect, fill_width, min_space[layer], fPtr, layer, 0, &root_critical_expand, density);
                 fill_width = ceil(fill_width * exp(alpha));
 			} while(density < min_density[layer] && fill_width >= min_width[layer]);
 			/*
@@ -199,7 +199,7 @@ void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_
 			if(density < min_density[layer])
 			{
 				fill_width = min_width[layer];
-				density = dummymetalinsert(&root, &window_rect, fill_width, min_space[layer], fPtr, layer, 0,  &root_critical_expand);
+				density = dummymetalinsert(&root, &window_rect, fill_width, min_space[layer], fPtr, layer, 0,  &root_critical_expand, density);
 				if(density < min_density[layer])
 				{
 				    stk.push(window_rect);
@@ -250,7 +250,7 @@ void printEnd(FILE *fPtr)
 
 //REALTYPE RTreeInsertRect_density(RTREEMBR *rc, int tid, RTREENODE **root, int height)
 
-REALTYPE dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, double space, FILE *fPtr, int layer, int mode, RTREENODE **root_critical_expand)
+REALTYPE dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, double space, FILE *fPtr, int layer, int mode, RTREENODE **root_critical_expand, REALTYPE density_orig)
 {
 	double x = window->bound[0] - space;
 	double y = window->bound[1] - space;
@@ -294,7 +294,11 @@ REALTYPE dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width,
 				}
 				x = x + fill_width + space;
 				REALTYPE density;
-				if( (density = RTreeSearchDensity(*node, window)) > min_density[layer])
+				if(fill_width != max_fill_width[layer]){
+                    density=density_orig+RTreeRectArea(&inner_rect);
+                    if (density > min_density[layer])
+                        return density;
+				} else if( (density = RTreeSearchDensity(*node, window)) > min_density[layer])
 					return density;
 			}
 			else
@@ -503,7 +507,7 @@ void check_layer(RTREENODE *root, int layer, FILE *fPtr, stack<T>& stk, RTREENOD
 				REALTYPE density = original_density;
 				double fill_width = max_fill_width[layer];
                 do {
-					density = dummymetalinsert(&root, &window_rect, fill_width, min_space[layer], fPtr, layer, 1, &root_critical_expand);
+					density = dummymetalinsert(&root, &window_rect, fill_width, min_space[layer], fPtr, layer, 1, &root_critical_expand, density);
 					fill_width = ceil(fill_width * exp(alpha));
 				} while( density < min_density[layer] && fill_width > min_width[layer]);
 				if(density < min_density[layer])
