@@ -89,12 +89,9 @@ void process(char filename[])
 	//ifstream designFile, outputFile, rule_fileFile, process_fileFile;
 	FILE *ruleFile, *processFile;
 	char line[10000];
-	char *character;
 	char design[20];
 	char *critical;
 	char output[20], rule_file[20], process_file[20];
-	char *get_first;
-	int index;
 	critical_net *critical_net_head = NULL;
 	if(fp==NULL)
 	{
@@ -191,7 +188,7 @@ void process(char filename[])
 			break;
 		}
 		total_layer++;
-		index=atoi(strtok(line, " "))-1;
+		int index=atoi(strtok(line, " "))-1;
 		strtok(NULL, " ");//Type
 		//printf("%s", strtok(NULL, " "));
 		//printf("%f", atof(strtok(NULL, " ")));

@@ -23,12 +23,41 @@ extern double min_density[20];
 extern double max_density[20];
 extern int total_layer;
 
+template <typename T>
+struct frame{
+    T data;
+    struct frame<T> *next;
+};
 
+template <typename T>
+struct stack {
+    frame<T>* head = NULL;
+    void push(T data_in){
+        frame<T> *node = new frame<T>;
+        node->data=data_in;
+        node->next=head;
+        head=node;
+    }
+    frame<T>* pop(){//TODO NULL handling //Return pointer? //Pop frame out?
+        if(head != NULL){
+            frame<T> *out = head;
+            head = head->next;
+            return out;
+        } else {
+            return NULL;
+        }
+    }
+};
+
+typedef RTREEMBR DRC_ERRMBR;
+
+/*
 typedef struct DRC_ERROR
 {
 	RTREEMBR error_rect;
 	struct DRC_ERROR *next = NULL;
 } DRC_ERROR;
+*/
 
 typedef struct netlist
 {
@@ -54,7 +83,8 @@ void pattern(RTREENODE **node, RTREEMBR *window, double space, FILE *fPtr, int l
 int horizontal_vertical(RTREEMBR *window, RTREENODE *root);
 void insert_hori_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, double fill_width, int layer, FILE *fPtr);
 void insert_vert_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, double fill_width, int layer, FILE *fPtr);
-void check_layer(RTREENODE *root, int layer, FILE *fPtr, DRC_ERROR* head, RTREENODE *root_critical_expand);
+template <typename T>
+void check_layer(RTREENODE *root, int layer, FILE *fPtr, stack<T>& stk, RTREENODE *root_critical_expand);
 void lastcheck(RTREENODE *root, int layer);
 void print_rect(RTREEMBR *rect, int layer, FILE *fPtr);
 void insert_empty_window(RTREENODE **root, RTREEMBR *window, int layer, FILE *fPtr, double width);
@@ -132,10 +162,12 @@ void critical_to_matrix(int critical_type[], critical_net *critical_net_head)
 
 void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_critical_expand)
 {
+    /*
 	DRC_ERROR
         *head = NULL,
         *tail = NULL;
-
+    */
+    stack<DRC_ERRMBR> stk;
 	RTREEMBR window_rect = {
 	    chip_boundary.bound[0],
 	    chip_boundary.bound[1],
@@ -151,45 +183,54 @@ void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_
 			fprintf(fPtr, "<rect width=\"%f\" height=\"%f\" x=\"%f\" y=\"%f\" style=\"fill:none;stroke:#000000;stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1;opacity:1;stroke-opacity:1\"/>\n", window_rect.bound[2] - window_rect.bound[0], window_rect.bound[3] - window_rect.bound[1], window_rect.bound[0] - chip_boundary.bound[0], chip_boundary.bound[3] - window_rect.bound[3]);
 #endif
 			double fill_width = max_fill_width[layer];
-			if(RTreeSearchDensity(root, &window_rect) == 0)
-				insert_empty_window(&root, &window_rect, layer, fPtr, window_width / 2.0);
-			else while(RTreeSearchDensity(root, &window_rect) <= min_density[layer] && fill_width >= min_width[layer]) {
-					dummymetalinsert(&root, &window_rect, fill_width, min_space[layer], fPtr, layer, 0, &root_critical_expand);
-					fill_width = ceil(fill_width * exp(alpha));
-            }
-			if(RTreeSearchDensity(root, &window_rect) < min_density[layer])
+			REALTYPE density;
+			if((density = RTreeSearchDensity(root, &window_rect)) == 0)
+				insert_empty_window(&root, &window_rect, layer, fPtr, window_width / 2.);
+			else if(density < min_density[layer]) do{
+                dummymetalinsert(&root, &window_rect, fill_width, min_space[layer], fPtr, layer, 0, &root_critical_expand);
+                fill_width = ceil(fill_width * exp(alpha));
+			} while((density = RTreeSearchDensity(root, &window_rect)) < min_density[layer] && fill_width >= min_width[layer]);
+			/*
+            while((density = RTreeSearchDensity(root, &window_rect)) < min_density[layer] && fill_width >= min_width[layer]) {
+                dummymetalinsert(&root, &window_rect, fill_width, min_space[layer], fPtr, layer, 0, &root_critical_expand);
+                fill_width = ceil(fill_width * exp(alpha));
+            }*/
+			if(density < min_density[layer])
 			{
 				fill_width = min_width[layer];
 				dummymetalinsert(&root, &window_rect, fill_width, min_space[layer], fPtr, layer, 0,  &root_critical_expand);
 				if(RTreeSearchDensity(root, &window_rect) < min_density[layer])
 				{
+				    stk.push(window_rect);
+				    /*
 					DRC_ERROR *tmp = new DRC_ERROR;
 					tmp->error_rect = window_rect;
 					if(head == NULL)
 					{
-						head = tmp;
-						tail = tmp;
+                        head = tmp;
+                        tail = tmp;
 					} else {
 						tail->next = tmp;
 						tail = tmp;
 					}
+					*/
 #ifdef svg
 					fprintf(fPtr, "<rect width=\"%f\" height=\"%f\" x=\"%f\" y=\"%f\" style=\"fill:none;stroke:#ff6600;stroke-width:100;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1;opacity:1;stroke-opacity:1\"/>\n", window_rect.bound[2] - window_rect.bound[0], window_rect.bound[3] - window_rect.bound[1], window_rect.bound[0] - chip_boundary.bound[0], chip_boundary.bound[3] - window_rect.bound[3]);
 #endif
 				}
 			}
-			window_rect.bound[0] = window_rect.bound[0] + window_width / 2.0;
-			window_rect.bound[2] = window_rect.bound[0] + window_width / 2.0;
+			window_rect.bound[0] = window_rect.bound[0] + window_width / 2.;
+			window_rect.bound[2] = window_rect.bound[0] + window_width / 2.;
 		}
-		window_rect.bound[1] = window_rect.bound[1] + window_width / 2.0;
-		window_rect.bound[3] = window_rect.bound[1] + window_width / 2.0;
+		window_rect.bound[1] = window_rect.bound[1] + window_width / 2.;
+		window_rect.bound[3] = window_rect.bound[1] + window_width / 2.;
 		window_rect.bound[0] = chip_boundary.bound[0];
-		window_rect.bound[2] = window_rect.bound[0] + window_width / 2.0;
+		window_rect.bound[2] = window_rect.bound[0] + window_width / 2.;
 	}
-	if(head != NULL)
+	if(stk.head != NULL)
 	{
 		printf("Checking\n");
-		check_layer(root, layer, fPtr, head, root_critical_expand);
+		check_layer(root, layer, fPtr, stk, root_critical_expand);
 	}
 	else
 		printf("Layer %d no need to check\n", layer+1);
@@ -214,16 +255,16 @@ void dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width, dou
 	if(mode == 0)
 	{
 		if(fill_width == min_width[layer])
-			move_space = 5.0;
+			move_space = 5.;
 		else
-			move_space = 60.0;
+			move_space = 60.;
 	}
 	else//check
 	{
 		if(fill_width == min_width[layer])
-			move_space = 1.0;
+			move_space = 1.;
 		else
-			move_space = 20.0;
+			move_space = 20.;
 	}
 
 	while((y + space < window->bound[3]) && (y + 2 * space + fill_width < chip_boundary.bound[3]))
@@ -297,9 +338,9 @@ int horizontal_vertical(RTREEMBR *window, RTREENODE *root)
 			horizontal_counter++;
 		if(!RTreeLeafOverlap(root, &vertical_check_line))
 			vertical_counter++;
-		horizontal_check_line.bound[1] = horizontal_check_line.bound[1] + 10.0;
+		horizontal_check_line.bound[1] = horizontal_check_line.bound[1] + 10.;
 		horizontal_check_line.bound[3] = horizontal_check_line.bound[1];
-		vertical_check_line.bound[0] = vertical_check_line.bound[0] + 10.0;
+		vertical_check_line.bound[0] = vertical_check_line.bound[0] + 10.;
 		vertical_check_line.bound[2] = vertical_check_line.bound[0];
 	}
 	if(horizontal_counter > vertical_counter)
@@ -312,9 +353,9 @@ void insert_hori_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, dou
 {
 	double x = window->bound[0] - space;
 	double y = window->bound[1] - space;
-	double y_move_space = 1.0;
-	double x_move_space = 10.0;
-	double length = 0.0;
+	double y_move_space = 1.;
+	double x_move_space = 10.;
+	double length = 0.;
 	while(y + 2 * space + fill_width <= window->bound[3])
 	{
 		int insert_flag = 0;
@@ -363,9 +404,9 @@ void insert_vert_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, dou
 {
 	double x = window->bound[0] - space;
 	double y = window->bound[1] - space;
-	double x_move_space = 1.0;
-	double y_move_space = 10.0;
-	double length = 0.0;
+	double x_move_space = 1.;
+	double y_move_space = 10.;
+	double length = 0.;
 	while(x + 2 * space + fill_width <= window->bound[2])
 	{
 		int insert_flag = 0;
@@ -410,17 +451,19 @@ void insert_vert_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, dou
 	}
 }
 
-void check_layer(RTREENODE *root, int layer, FILE *fPtr, DRC_ERROR* head, RTREENODE *root_critical_expand)
+template <typename T>
+void check_layer(RTREENODE *root, int layer, FILE *fPtr, stack<T>& stk, RTREENODE *root_critical_expand)
 {
 	int way;
-	DRC_ERROR* prev;
-	while(head!= NULL)
+	//DRC_ERROR* prev;
+	frame<T> *head;
+	while((head = stk.pop()) != NULL)
 	{
-		RTREEMBR window = head->error_rect;
-		RTREEMBR left_up = {{window.bound[0] - window_width/2.0, window.bound[1], window.bound[2], window.bound[3] + window_width / 2.0}};
-		RTREEMBR left_down = {{window.bound[0] - window_width/2.0, window.bound[1] - window_width/2.0, window.bound[2], window.bound[3]}};
-		RTREEMBR right_up = {{window.bound[0], window.bound[1], window.bound[2]  + window_width / 2.0, window.bound[3]  + window_width / 2.0}};
-		RTREEMBR right_down = {{window.bound[0], window.bound[1] - window_width/2.0, window.bound[2]  + window_width / 2.0, window.bound[3]}};
+		RTREEMBR window = head->data;
+		RTREEMBR left_up = {{window.bound[0] - window_width/2., window.bound[1], window.bound[2], window.bound[3] + window_width / 2.}};
+		RTREEMBR left_down = {{window.bound[0] - window_width/2., window.bound[1] - window_width/2., window.bound[2], window.bound[3]}};
+		RTREEMBR right_up = {{window.bound[0], window.bound[1], window.bound[2]  + window_width / 2., window.bound[3]  + window_width / 2.}};
+		RTREEMBR right_down = {{window.bound[0], window.bound[1] - window_width/2., window.bound[2]  + window_width / 2., window.bound[3]}};
 		for(int i = 0; i < 4; i++)
 		{
 			RTREEMBR window_rect;
@@ -476,9 +519,12 @@ void check_layer(RTREENODE *root, int layer, FILE *fPtr, DRC_ERROR* head, RTREEN
 				}
 			}
 		}
+		/*
 		prev = head;
 		head = head -> next;
 		delete prev;
+		*/
+		delete head;
 	}
 	printf("Layer %d checked finished\n", layer + 1);
 }
@@ -495,9 +541,9 @@ void lastcheck(RTREENODE *root, int layer)
 			RTREEMBR  window_rect = {{x, y, x + window_width, y + window_width}};
 			if(RTreeSearchDensity(root, &window_rect) < min_density[layer])
 				printf("Bad rect %f %f %f %f --- %f \n", window_rect.bound[0], window_rect.bound[1], window_rect.bound[2], window_rect.bound[3], RTreeSearchDensity(root, &window_rect));
-			y = y + window_width / 2.0;
+			y = y + window_width / 2.;
 		}
-		x = x + window_width / 2.0;
+		x = x + window_width / 2.;
 		y = chip_boundary.bound[1];
 	}
 }
@@ -513,24 +559,21 @@ void print_rect(RTREEMBR *rect, int layer, FILE *fPtr)
 
 void insert_empty_window(RTREENODE **root, RTREEMBR *window, int layer, FILE *fPtr, double width)
 {
-	double half_width = ceil(sqrt(width * width * min_density[layer]/4.0)/2.0);
-	if(2 * half_width > max_fill_width[layer])
-	{
-		RTREEMBR left_down_window = {{window->bound[0], window->bound[1], window->bound[0] + width/2.0, window->bound[1] + width/2.0}};
-		RTREEMBR left_up_window = {{window->bound[0], window->bound[1] + width/2.0, window->bound[0] + width/ 2.0, window->bound[3]}};
-		RTREEMBR right_down_window = {{window->bound[0] + width/2.0, window->bound[1], window->bound[2], window->bound[1] + width/2.0}};
-		RTREEMBR right_up_window = {{window->bound[0] + width/2.0, window->bound[1] + width/2.0, window->bound[2], window->bound[3]}};
-		insert_empty_window(root, &left_down_window, layer, fPtr, width/2.0);
-		insert_empty_window(root, &left_up_window, layer, fPtr, width/2.0);
-		insert_empty_window(root, &right_down_window, layer, fPtr, width/2.0);
-		insert_empty_window(root, &right_up_window, layer, fPtr, width/2.0);
-	}
-	else
-	{
-		double x1 = window->bound[0] + width / 4.0;
-		double y1 = window->bound[1] + width / 4.0;
-		double x2 = window->bound[2] - width / 4.0;
-		double y2 = window->bound[3] - width / 4.0;
+	double half_width = ceil(sqrt(width * width * min_density[layer]/4.)/2.);
+	if(2 * half_width > max_fill_width[layer]) {
+		RTREEMBR left_down_window = {{window->bound[0], window->bound[1], window->bound[0] + width/2., window->bound[1] + width/2.}};
+		RTREEMBR left_up_window = {{window->bound[0], window->bound[1] + width/2., window->bound[0] + width/ 2., window->bound[3]}};
+		RTREEMBR right_down_window = {{window->bound[0] + width/2., window->bound[1], window->bound[2], window->bound[1] + width/2.}};
+		RTREEMBR right_up_window = {{window->bound[0] + width/2., window->bound[1] + width/2., window->bound[2], window->bound[3]}};
+		insert_empty_window(root, &left_down_window, layer, fPtr, width/2.);
+		insert_empty_window(root, &left_up_window, layer, fPtr, width/2.);
+		insert_empty_window(root, &right_down_window, layer, fPtr, width/2.);
+		insert_empty_window(root, &right_up_window, layer, fPtr, width/2.);
+	} else {
+		double x1 = window->bound[0] + width / 4.;
+		double y1 = window->bound[1] + width / 4.;
+		double x2 = window->bound[2] - width / 4.;
+		double y2 = window->bound[3] - width / 4.;
 		RTREEMBR left_down = {{x1 - half_width, y1 - half_width, x1 + half_width, y1 + half_width}};
 		RTREEMBR left_up = {{x1 - half_width, y2 - half_width, x1 + half_width, y2 + half_width}};
 		RTREEMBR right_down = {{x2 - half_width, y1 - half_width, x2 + half_width, y1 + half_width}};
