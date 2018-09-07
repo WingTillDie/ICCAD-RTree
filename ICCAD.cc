@@ -89,11 +89,9 @@ void process(char filename[])
 	//ifstream designFile, outputFile, rule_fileFile, process_fileFile;
 	FILE *ruleFile, *processFile;
 	char line[10000];
-	char *character;
 	char design[20];
 	char *critical;
 	char output[20], rule_file[20], process_file[20];
-	char *get_first;
 	int index;
 	critical_net *critical_net_head = NULL;
 	if(fp==NULL)
