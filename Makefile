@@ -1,7 +1,8 @@
-SRC = $(wildcard *.c)
-OBJ = $(SRC:.c=.o)
+SRC = $(wildcard *.cc)
+OBJ = $(SRC:.cc=.o)
 
-CFLAGS = $(CFLAGS-$@) -g -O3 -ftree-parallelize-loops=7
+CXXFLAGS = $(CXXFLAGS-$@) -O3 -ftree-parallelize-loops=7
+#Add -g in debugging build
 LDFLAGS = -lm -fopenmp
 
 TARGET = cada025
@@ -9,11 +10,13 @@ TARGET = cada025
 all: $(TARGET)
 
 $(TARGET): $(OBJ)
-	$(CC) -o $@ $^ $(LDFLAGS)
+#	$(CC) -o $@ $^ $(LDFLAGS)
+	g++ -o $@ $^ $(LDFLAGS)
 
 clean:
 	rm -rf *.o $(TARGET)
 
 CFLAGS-asm += -S
-asm:
-	$(CC) $(CFLAGS) $(SRC)
+asm: 
+#	$(CC) $(CFLAGS) $(SRC)
+	g++ $(CFLAGS) $(SRC)

@@ -132,8 +132,17 @@ void critical_to_matrix(int critical_type[], critical_net *critical_net_head)
 
 void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_critical_expand)
 {
-	DRC_ERROR *tmp = NULL, *head = NULL, *tail = NULL;
-	RTREEMBR window_rect = {{chip_boundary.bound[0], chip_boundary.bound[1], chip_boundary.bound[0] + window_width / 2.0, chip_boundary.bound[1] + window_width / 2.0}};
+	DRC_ERROR
+        *head = NULL,
+        *tail = NULL;
+
+	RTREEMBR window_rect = {
+	    chip_boundary.bound[0],
+	    chip_boundary.bound[1],
+	    chip_boundary.bound[0] + window_width / 2.0,
+	    chip_boundary.bound[1] + window_width / 2.0
+    };
+
 	while(window_rect.bound[3] <= chip_boundary.bound[3])
 	{
 		while(window_rect.bound[2] <= chip_boundary.bound[2])
@@ -156,7 +165,7 @@ void layer_dummy_insert(RTREENODE *root, FILE *fPtr, int layer, RTREENODE *root_
 				dummymetalinsert(&root, &window_rect, fill_width, min_space[layer], fPtr, layer, 0,  &root_critical_expand);
 				if(RTreeSearchDensity(root, &window_rect) < min_density[layer])
 				{
-					tmp = new DRC_ERROR;
+					DRC_ERROR *tmp = new DRC_ERROR;
 					tmp->error_rect = window_rect;
 					if(head == NULL)
 					{
