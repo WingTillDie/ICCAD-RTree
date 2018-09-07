@@ -89,13 +89,14 @@ void check_layer(RTREENODE *root, int layer, FILE *fPtr, stack<T>& stk, RTREENOD
 void lastcheck(RTREENODE *root, int layer, REALTYPE density);
 void print_rect(RTREEMBR *rect, int layer, FILE *fPtr);
 REALTYPE insert_empty_window(RTREENODE **root, RTREEMBR *window, int layer, FILE *fPtr, double width, REALTYPE density);
+REALTYPE RTreeInsertRect_density(RTREEMBR *rc, int tid, RTREENODE **root, int height, RTREEMBR *window, REALTYPE density);
 
-/*
-REALTYPE RTreeInsertRect_density(RTREEMBR *rc, int tid, RTREENODE **root, int height, REALTYPE density){//Lack window
+
+REALTYPE RTreeInsertRect_density(RTREEMBR *rc, int tid, RTREENODE **root, int height, RTREEMBR *window, REALTYPE density){
     RTreeInsertRect(rc, tid, root, height);
     return density+=RTreeRectArea(rc)/RTreeRectArea(window);
 }
-*/
+
 
 void printrule()
 {
@@ -287,8 +288,7 @@ REALTYPE dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width,
 					density = pattern(node, &inner_rect, space, fPtr, layer, density);
 				else
 				{
-					RTreeInsertRect(&inner_rect, ++fill_id, node, 0);
-                    density+=RTreeRectArea(&inner_rect)/RTreeRectArea(window);
+					density = RTreeInsertRect_density(&inner_rect, ++fill_id, node, 0, window, density);
 #ifdef svg
 					if(mode)
 						fprintf(fPtr, "<rect width=\"%f\" height=\"%f\" x=\"%f\" y=\"%f\" style=\"fill:#d4aa00;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1\"/>\n", inner_rect.bound[2] - inner_rect.bound[0], inner_rect.bound[3] - inner_rect.bound[1], inner_rect.bound[0] - chip_boundary.bound[0], chip_boundary.bound[3] - inner_rect.bound[3]);
@@ -311,26 +311,24 @@ REALTYPE dummymetalinsert(RTREENODE **node, RTREEMBR *window, double fill_width,
 	return density;
 }
 
-REALTYPE pattern(RTREENODE **node, RTREEMBR *window, double space, FILE *fPtr, int layer, REALTYPE density_orig)
+REALTYPE pattern(RTREENODE **node, RTREEMBR *window, double space, FILE *fPtr, int layer, REALTYPE density)
 {
 	double x = window->bound[0];
 	double y = window->bound[1];
 	double width = floor((max_fill_width[layer] - 1 * space) / 2);
-	REALTYPE density=density_orig;
 	while(y + width <= window->bound[3])
 	{
 		while(x + width <= window->bound[2])
 		{
 			RTREEMBR rect = {{x, y, x + width, y + width}};
 
-			RTreeInsertRect(&rect, ++fill_id, node, 0);
+			density = RTreeInsertRect_density(&rect, ++fill_id, node, 0, window, density);
 #ifdef svg
 			fprintf(fPtr, "<rect width=\"%f\" height=\"%f\" x=\"%f\" y=\"%f\" style=\"fill:#000080;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1\"/>\n", rect.bound[2] - rect.bound[0], rect.bound[3] - rect.bound[1], rect.bound[0] - chip_boundary.bound[0], chip_boundary.bound[3] - rect.bound[3]);
 #else
 			fprintf(fPtr, "%.f %.f %.f %.f %.f 0 %d fill\n", fill_id, rect.bound[0], rect.bound[1], rect.bound[2], rect.bound[3], layer + 1);
 #endif
 			x = x + width + space;
-			density+=RTreeRectArea(&rect)/RTreeRectArea(window);
 		}
 		x = window->bound[0];
 		y = y + width + space;
@@ -389,8 +387,7 @@ REALTYPE insert_hori_rect_dummy(RTREENODE *root, RTREEMBR *window, double space,
 						RTREEMBR inner_rect = {{outer_rect.bound[0] + space, outer_rect.bound[1] + space, outer_rect.bound[2] - space, outer_rect.bound[3] - space}};
 						if((temp_rect.bound[2] - space > chip_boundary.bound[2]))
 							inner_rect.bound[2] = chip_boundary.bound[2];
-						RTreeInsertRect(&inner_rect, ++fill_id, &root, 0);
-						density+=RTreeRectArea(&inner_rect)/RTreeRectArea(window);
+						density = RTreeInsertRect_density(&inner_rect, ++fill_id, &root, 0, window, density);
 #ifdef svg
 						fprintf(fPtr, "<rect width=\"%f\" height=\"%f\" x=\"%f\" y=\"%f\" style=\"fill:#d3bc5f;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1\"/>\n", inner_rect.bound[2] - inner_rect.bound[0], inner_rect.bound[3] - inner_rect.bound[1], inner_rect.bound[0] - chip_boundary.bound[0], chip_boundary.bound[3] - inner_rect.bound[3]);
 #else
@@ -416,14 +413,13 @@ REALTYPE insert_hori_rect_dummy(RTREENODE *root, RTREEMBR *window, double space,
 	return density;
 }
 
-REALTYPE insert_vert_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, double fill_width, int layer, FILE *fPtr, REALTYPE density_orig)
+REALTYPE insert_vert_rect_dummy(RTREENODE *root, RTREEMBR *window, double space, double fill_width, int layer, FILE *fPtr, REALTYPE density)
 {
 	double x = window->bound[0] - space;
 	double y = window->bound[1] - space;
 	double x_move_space = 1.;
 	double y_move_space = 10.;
 	double length = 0.;
-	REALTYPE density = density_orig;
 	while(x + 2 * space + fill_width <= window->bound[2])
 	{
 		int insert_flag = 0;
@@ -486,6 +482,7 @@ void check_layer(RTREENODE *root, int layer, FILE *fPtr, stack<T>& stk, RTREENOD
 	int way;
 	//DRC_ERROR* prev;
 	frame<T> *head;
+    REALTYPE density = density_orig;
 	while((head = stk.pop()) != NULL)
 	{
 		RTREEMBR window = head->data;
@@ -515,7 +512,6 @@ void check_layer(RTREENODE *root, int layer, FILE *fPtr, stack<T>& stk, RTREENOD
 			if(window_rect.bound[0] >= chip_boundary.bound[0] && window_rect.bound[1] >= chip_boundary.bound[1] && window_rect.bound[2] <= chip_boundary.bound[2] && window_rect.bound[3] <= chip_boundary.bound[3])
 			{
 				//double original_density = RTreeSearchDensity(root, &window_rect);
-				REALTYPE density = density_orig;
 				double fill_width = max_fill_width[layer];
                 do {
 					density = dummymetalinsert(&root, &window_rect, fill_width, min_space[layer], fPtr, layer, 1, &root_critical_expand, density);
